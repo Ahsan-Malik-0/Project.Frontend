@@ -1,0 +1,47 @@
+﻿<div class="top-row navbar navbar-dark bg-success">
+    <div class="container text-center d-sm-block">
+        <a class="navbar-brand fw-bold text-center" href="/president">President</a>
+        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </div>
+</div>
+
+<div class="@NavMenuCssClass nav-scrollable bg-success" @onclick="ToggleNavMenu">
+    <nav class="flex-column">
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="president" Match="NavLinkMatch.All">
+                <span class="bi bi-house-door-fill mb-1 h5"></span> Home
+            </NavLink>
+        </div>
+        <hr class="m-0"/>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="president/event">
+                <span class="bi bi-plus-square-fill mb-1 h5" aria-hidden="true"></span> Add Event
+            </NavLink>
+        </div>
+        <hr class="m-0"/>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="/president/history">
+                <span class="bi bi-clock-history mb-1 h5" aria-hidden="true"></span> History
+            </NavLink>
+        </div>
+        <hr class="m-0"/>
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="/president/profile">
+                <span class="bi bi-person-square mb-1 h5" aria-hidden="true"></span> Profile
+            </NavLink>
+        </div>
+    </nav>
+</div>
+
+@code {
+    private bool collapseNavMenu = true;
+
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+}

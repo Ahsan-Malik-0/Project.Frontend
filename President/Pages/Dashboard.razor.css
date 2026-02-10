@@ -1,0 +1,35 @@
+﻿/* Customize the accordion background, border and focus outline for this component only */
+
+/* Default (collapsed) header appearance */
+.my-accordion .accordion-button {
+    background: #19875445;
+    color: black;
+    border-radius: 5px;
+    margin-bottom: 3px;
+}
+
+/* Expanded header appearance — stronger accent and outline */
+.my-accordion .accordion-button:not(.collapsed) {
+    background: #198754;
+    color: white;
+    border-color: white;
+    box-shadow: none;
+/*    subtle glow outline*/
+}
+
+/* Accordion body background */
+.my-accordion .accordion-collapse .accordion-body {
+    background-color: #ffffff;
+/*    border-top: 1px solid rgba(15, 23, 42, 0.03);*/
+}
+
+/* Custom focus outline (replaces default browser outline) */
+.my-accordion .accordion-button:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+.accordion-button::after
+{
+    display: none;
+}

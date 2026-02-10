@@ -1,0 +1,152 @@
+﻿@page "/"
+@page "/login"
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Web
+
+@layout MainLayout
+
+@* <img src="/images/logo-creative-tim-black.png"/> *@
+<div class="my-background-div">
+    <h1 class="text-center fst-italic mt-5">Societies Event Requisition System</h1>
+    <div class="mx-auto rounded border p-4 blur-effect" style="width: 400px; margin: 60px">
+        <h3 class="text-center mb-3 fw-bold">Login</h3>
+        <hr />
+
+        @if (error.Length > 0)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <strong>@error</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
+        <div class="mb-4">
+            <label class="form-label">Username</label>
+            <input class="form-control" type="text" @bind="username" @onkeydown="OnKeyDown" />
+            @if (string.IsNullOrEmpty(username))
+            {
+                <p style="font-size: 12px;" class="text-danger"> @validateUsername </p>
+            }
+        </div>
+
+        <div class="mb-4">
+            <label class="form-label">Password</label>
+            <input class="form-control" type="password" @bind="password" @onkeydown="OnKeyDown" />
+            @if (string.IsNullOrEmpty(password))
+            {
+                <p style="font-size: 12px;" class="text-danger"> @validatePassword </p>
+            }
+        </div>
+
+
+        <div class="w-100">
+            <button type="button" class="btn btn-success p-2 w-100" @onclick="HandleLogin" disabled="@isLoading">
+                @if (isLoading)
+                {
+                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    <span>Loading...</span>
+                }
+                else
+                {
+                    <span>Login</span>
+                }
+            </button>
+        </div>
+    </div>
+</div>
+
+@inject AuthenticationStateProvider provider
+@inject NavigationManager nav
+
+@code {
+    public string username = "";
+    public string password = "";
+    public string error = "";
+    public string role = "";
+    public string validateUsername = "";
+    public string validatePassword = "";
+    private bool isLoading = false;
+
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            // avoid duplicate / concurrent submissions
+            if (!isLoading)
+            {
+                await HandleLogin();
+            }
+        }
+    }
+
+    private async Task HandleLogin()
+    {
+        // Prevent re-entry if a login is already in progress
+        if (isLoading)
+        {
+            return;
+        }
+
+        // reset previous validation / errors
+        validateUsername = "";
+        validatePassword = "";
+        error = "";
+
+        if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
+        {
+            if (string.IsNullOrEmpty(username))
+            {
+                validateUsername = "username is required";
+            }
+            if (string.IsNullOrEmpty(password))
+            {
+                validatePassword = "password is required";
+            }
+            return;
+        }
+
+        isLoading = true;
+        try
+        {
+            LoginDto request = new LoginDto()
+            {
+                Username = username,
+                HashPassword = password
+            };
+
+            var authStateProvider = (CustomAuthStateProvider)provider;
+            var response = await authStateProvider.LoginAsync(request);
+
+            if (response.Success)
+            {
+                var authState = await authStateProvider.GetAuthenticationStateAsync();
+                var user = authState.User;
+
+                role = user.FindFirst(ClaimTypes.Role)?.Value ?? string.Empty;
+
+                if (role == "president")
+                {
+                    nav.NavigateTo($"/president");
+                }
+                else
+                {
+                    // fallback / other role navigation if needed
+                    nav.NavigateTo("/");
+                }
+            }
+            else
+            {
+                error = response.Error ?? "Login failed";
+            }
+        }
+        catch (Exception ex)
+        {
+            // surface unexpected errors
+            error = ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}
