@@ -2,10 +2,253 @@
 @layout PresidentLayout
 @attribute [Authorize]
 
-<h3>HellProfile</h3>
+<h2 class="my-3 fw-bold">My Profile:</h2>
+
+@if (loading)
+{
+    <div class="text-center text-muted">
+        <div class="spinner-border spinner-border-sm"></div>
+        <p class="mt-2">Loading profile...</p>
+    </div>
+}
+else if (memberProfile == null)
+{
+    <p class="text-center text-muted">Profile not found</p>
+}
+else
+{
+    <div class="d-flex justify-content-center">
+        <div class="row col-12 col-md-10 col-lg-6 mx-0">
+            <div class="card profile-card shadow border-1">
+                <div class="card-body">
+
+                    <div class="row align-items-center mb-4">
+                        <div class="text-center">
+                            @if (previewImage != null)
+                            {
+                                <img src="@previewImage"
+                                    class="rounded-circle img-thumbnail mb-2"
+                                    style="width:120px;height:120px;object-fit:cover" />
+                            }
+                            else
+                            {
+                                <img src="@($"data:image/png;base64,{memberProfile.Picture}")"
+                                    class="rounded-circle img-thumbnail mb-2"
+                                    style="width:120px;height:120px;object-fit:cover" />
+                            }
+
+                            @if (error.Length > 0)
+                            {
+                                <div class="alert alert-danger alert-dismissible fade show text-start" role="alert">
+                                    <strong>@error</strong>
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            }
+
+                            @if (isEditMode)
+                            {
+                                <InputFile 
+                                    OnChange="@HandleFileSelection" 
+                                    accept=".jpg, .jpeg, .png" 
+                                    class="form-control form-control-sm mt-2" 
+                                />
+                            }
+                        </div>
+                    </div>
+
+                    <EditForm Model="memberProfile" OnValidSubmit="HandleUpdate">
+                        <DataAnnotationsValidator />
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Name</label>
+                                <InputText class="form-control"
+                                            @bind-Value="memberProfile.Name"
+                                            disabled="@(!isEditMode)" />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Username</label>
+                                <InputText class="form-control"
+                                            @bind-Value="memberProfile.Username"
+                                            disabled="@(!isEditMode)" />
+                            </div>
+                        </div>
+
+                        @if(isEditMode)
+                        {
+                            <div class="row g-3 mt-2">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Old Password</label>
+                                    <InputText class="form-control"
+                                               @bind-Value="OldPass" />
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">New Password</label>
+                                    <InputText class="form-control"
+                                               @bind-Value="NewPass" />
+                                </div>
+                            </div>
+                        }
+
+                        <div class="d-flex flex-column flex-md-row justify-content-end gap-4 mt-4">
+                            @if (isEditMode)
+                            {
+                                <button type="button"
+                                        class="btn btn-outline-secondary w-100 w-md-auto"
+                                        @onclick="CancelEdit">
+                                    Cancel
+                                </button>
+
+                                <button type="submit"
+                                        class="btn btn-success w-100 w-md-auto">
+                                    Save Changes
+                                </button>
+                            }
+                            else
+                            {
+                                <button type="button"
+                                        class="btn btn-success w-100 w-md-auto"
+                                        @onclick="EnableEdit">
+                                    Edit Profile
+                                </button>
+                            }
+                        </div>
+                    </EditForm>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+           
+}
 
 
-
+@inject MemberServices memberServices
+@inject SharedServices sharedServices
+@inject IJSRuntime JS
 @code {
+    private string id = "";
+    private bool loading = false;
+    private bool isEditMode = false;
 
+    private string error = "";
+
+    private string OldPass = "";
+    private string NewPass = "";
+
+    private string? previewImage;
+
+    private MemberProfileDto? memberProfile;
+    private MemberProfileDto? backupProfile;
+
+    protected override async Task OnInitializedAsync()
+    {
+        loading = true;
+
+        try
+        {
+            var claims = await sharedServices.GetClaims(); 
+            id = claims.Id;
+
+            memberProfile = await memberServices.GetMemberProfile(id);
+
+            if (memberProfile == null)
+            {
+                await JS.InvokeVoidAsync("alert", "No profile found");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private void EnableEdit()
+    {
+        // backup for cancel
+        backupProfile = new MemberProfileDto
+        {
+            Name = memberProfile!.Name,
+            Username = memberProfile.Username,
+            Picture = memberProfile.Picture
+        };
+
+        isEditMode = true;
+    }
+
+    private void CancelEdit()
+    {
+        if (backupProfile != null && memberProfile != null)
+        {
+            memberProfile.Name = backupProfile.Name;
+            memberProfile.Username = backupProfile.Username;
+            memberProfile.Picture = backupProfile.Picture;
+            OldPass = "";
+            NewPass = "";
+            previewImage = null;
+        }
+
+        isEditMode = false;
+    }
+
+    private async Task HandleUpdate()
+    {
+        string? base64Image = null;
+
+        if (!string.IsNullOrEmpty(previewImage))
+        {
+            var base64Parts = previewImage.Split("base64,");
+            base64Image = base64Parts.Length > 1 ? base64Parts[1] : null;
+        }
+
+        var updateProfile = new MemberProfileUpdateDto()
+        {
+            Id = id,
+            Name = memberProfile!.Name,
+            Username = memberProfile.Username,
+            OldHashPassword = OldPass,
+            NewHashPassword = NewPass,
+            Picture = base64Image // null if no new image
+        };
+
+        var response = await memberServices.UpdateMemberProfile(updateProfile);
+
+        if(response.Success)
+        {
+            await JS.InvokeVoidAsync("alert", "Profile updated successfully");
+
+            isEditMode = false;
+            OldPass = "";
+            NewPass = "";
+            previewImage = null;
+
+            await OnInitializedAsync();
+        }
+        else
+        {
+            error = response.Error!;   
+        }
+    }
+
+    private async Task HandleFileSelection(InputFileChangeEventArgs e)
+    {
+        IBrowserFile selectedImage = e.File;
+
+        using var stream = selectedImage.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024);
+
+        var buffer = new byte[selectedImage.Size];
+        await stream.ReadAsync(buffer);
+
+        // Convert image to Base64 string
+        var base64 = Convert.ToBase64String(buffer);
+
+        previewImage = $"data:{selectedImage.ContentType};base64,{base64}";
+    }
 }

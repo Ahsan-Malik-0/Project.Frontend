@@ -86,7 +86,12 @@
 
                         <div class="col-md-3 mb-3">
                             <label class="form-label">Price</label>
-                            <input disabled="@(req_type == "non-financial")" class="form-control" type="number" @bind="req_price" />
+                            <input 
+                                disabled="@(req_type == "non-financial")" 
+                                class="form-control" 
+                                type="number" 
+                                @bind="req_price" 
+                                />
                         </div>
                     </div>
 
@@ -239,7 +244,7 @@
     private string req_type = "financial";
     private string req_name = "";
     private int req_qty;
-    private float req_price;
+    private decimal req_price;
     private string? eventError;
     private string? reqError;
 
@@ -264,6 +269,14 @@
             eventError = "At least one requirement is required.";
             return;
         }
+
+        if(event_date < DateTime.Now)
+        {
+            eventError = "Invalid Date";
+            return;
+        }
+
+
 
         if (isEventEditMode)
         {
@@ -327,6 +340,11 @@
     private void OnStatusChanged(ChangeEventArgs e)
     {
         req_type = e.Value?.ToString() ?? "financial";
+
+        if (req_type == "non-financial")
+        {
+            req_price = 0;
+        }
     }
 
 
@@ -340,6 +358,14 @@
             reqError = "Requirement type, name and quantity are required.";
             return;
         }
+
+        if(req_type == "financial" && req_price == 0)
+        {
+            reqError = "Price can't be zero for finential Requirement";
+            return;
+        }
+
+        decimal finalPrice = req_type == "non-financial" ? 0 : req_price;
 
         if (isEditMode && selectedRequirement != null)
         {

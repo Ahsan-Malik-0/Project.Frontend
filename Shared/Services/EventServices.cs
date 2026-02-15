@@ -122,5 +122,24 @@ namespace Project.Frontend.Shared.Services
                 return new ResponseResult() { Success = false, Error = ex.Message };
             }
         }
+
+        public async Task<List<Event>> GetAcceptedEvents(string memberId)
+        {
+            try
+            {
+                var respnse = await httpClient.GetAsync($"president/history?memberId={memberId}");
+
+                if (!respnse.IsSuccessStatusCode)
+                    return new List<Event>();
+
+                var events = await respnse.Content.ReadFromJsonAsync<List<Event>>();
+
+                return events ?? new List<Event>();
+            }
+            catch
+            {
+                return new List<Event>();
+            }
+        }
     }
 }

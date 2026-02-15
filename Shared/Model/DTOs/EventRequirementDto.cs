@@ -6,7 +6,7 @@ namespace Project.Frontend.Shared.Model.DTOs
     {
         public required string Type { get; set; }
         public required string Name { get; set; }
-        public float Price { get; set; }
+        public decimal Price { get; set; }
         public int Quantity { get; set; }
     }
 }
