@@ -1,8 +1,9 @@
 ﻿@page "/president/event"
+
 @* @page "/president/event/{EventId:guid}" *@
 
 @layout PresidentLayout
-@attribute [Authorize]
+@attribute [Authorize(Roles = "president")]
 
 <div class="container mt-4">
 

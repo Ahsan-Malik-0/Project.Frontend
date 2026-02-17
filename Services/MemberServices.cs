@@ -1,9 +1,9 @@
-﻿using Project.Frontend.Shared.Model;
-using Project.Frontend.Shared.Model.DTOs;
+﻿using Project.Frontend.Model;
+using Project.Frontend.Model.DTOs;
 using System.Net.Http.Json;
 using System.Text.Json.Nodes;
 
-namespace Project.Frontend.Shared.Services
+namespace Project.Frontend.Services
 {
     public class MemberServices
     {

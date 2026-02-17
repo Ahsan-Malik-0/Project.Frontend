@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace Project.Frontend.Shared.Model
+namespace Project.Frontend.Model
 {
     public class EventRequirement
     {

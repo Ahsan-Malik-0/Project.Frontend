@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Components.Forms;
 using System.ComponentModel.DataAnnotations;
 
-namespace Project.Frontend.Shared.Model.DTOs
+namespace Project.Frontend.Model.DTOs
 {
     public class MemberDto
     {

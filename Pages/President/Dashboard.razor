@@ -1,9 +1,11 @@
-﻿@page "/president/history"
+﻿@page "/president"
+
+
 @layout PresidentLayout
-@attribute [Authorize]
 
+@attribute [Authorize(Roles = "president")]
 
-<h2 class="my-3 fw-bold">History:</h2>
+<h2 class="my-3 fw-bold">Pending Events:</h2>
 
 @if (loading)
 {
@@ -11,7 +13,7 @@
 }
 else if (events.Count == 0)
 {
-    <p class="text-center text-muted">No history available</p>
+    <p class="text-center text-muted">No pending events available</p>
 }
 else
 {
@@ -36,7 +38,7 @@ else
                             Status: @_event.Status
                         </p>
 
-                        @* <div class="mt-auto d-flex gap-2">
+                        <div class="mt-auto d-flex gap-2">
                             <button class="btn btn-sm btn-outline-primary w-100"
                                     @onclick="() => EditEvent(_event.Id)">
                                 Edit
@@ -46,7 +48,7 @@ else
                                     @onclick="() => DeleteEvent(_event)">
                                 Delete
                             </button>
-                        </div> *@
+                        </div>
 
                         <button class="btn btn-sm btn-success mt-2 p-2"
                                 data-bs-toggle="modal"
@@ -110,8 +112,11 @@ else
 }
 
 
+
 @inject SharedServices sharedServices
 @inject EventServices eventServices
+@inject IJSRuntime JS
+@inject NavigationManager nav
 @code {
     private string id = "";
     private bool loading = false;
@@ -125,7 +130,7 @@ else
 
         try
         {
-            events = (await eventServices.GetAcceptedEvents(id))
+            events = (await eventServices.GetPendingEvents(id))
             .OrderByDescending(e => e.Date.Date)
             .ToList();
         }
@@ -139,4 +144,30 @@ else
         }
     }
 
+    private void EditEvent(Guid id)
+    {
+        nav.NavigateTo($"president/event?id={id}");
+    }
+
+
+    private async Task DeleteEvent(Event @event)
+    {
+
+        bool confirmDelete =  await JS.InvokeAsync<bool>("confirm", $"Are you sure you want to delte {@event.Name}");
+
+        if (confirmDelete)
+        {
+            var response = await eventServices.DeleteEvent(@event.Id);
+
+            if (!response.Success)
+            {
+                await JS.InvokeVoidAsync("alert", $"Event not delete due to {response.Error}");
+            }
+            else
+            {
+                await JS.InvokeVoidAsync("alert", $"{@event.Name} has been deleted Successfully");
+                await OnInitializedAsync();
+            }
+        }
+    }
 }

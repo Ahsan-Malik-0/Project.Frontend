@@ -1,6 +1,6 @@
 ﻿@page "/president/profile"
 @layout PresidentLayout
-@attribute [Authorize]
+@attribute [Authorize(Roles = "president")]
 
 <h2 class="my-3 fw-bold">My Profile:</h2>
 
@@ -239,15 +239,14 @@ else
 
     private async Task HandleFileSelection(InputFileChangeEventArgs e)
     {
-        IBrowserFile selectedImage = e.File;
+        var selectedImage = e.File;
 
         using var stream = selectedImage.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024);
+        using var ms = new MemoryStream();
 
-        var buffer = new byte[selectedImage.Size];
-        await stream.ReadAsync(buffer);
+        await stream.CopyToAsync(ms);
 
-        // Convert image to Base64 string
-        var base64 = Convert.ToBase64String(buffer);
+        var base64 = Convert.ToBase64String(ms.ToArray());
 
         previewImage = $"data:{selectedImage.ContentType};base64,{base64}";
     }

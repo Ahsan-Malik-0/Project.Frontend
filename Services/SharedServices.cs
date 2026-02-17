@@ -1,12 +1,11 @@
 ﻿using Microsoft.AspNetCore.Components.Authorization;
-using Project.Frontend.Services;
-using Project.Frontend.Shared.Model;
+using Project.Frontend.Model;
 using System.Data;
 using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Xml.Linq;
 
-namespace Project.Frontend.Shared.Services
+namespace Project.Frontend.Services
 {
     public class SharedServices
     {

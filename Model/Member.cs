@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Project.Frontend.Shared.Model
+namespace Project.Frontend.Model
 {
     public class Member
     {
