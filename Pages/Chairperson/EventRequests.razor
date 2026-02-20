@@ -1,0 +1,204 @@
+﻿@page "/chairperson/events-requests"
+@layout ChairperosnLayout
+
+@attribute [Authorize(Roles = "chairperson")]
+
+
+<h2 class="my-3 fw-bold">Requests:</h2>
+
+@if (loading)
+{
+    <p class="text-center text-muted">Loading events</p>
+}
+else if (events.Count == 0)
+{
+    <p class="text-center text-muted">No pending events available</p>
+}
+else
+{
+    <div class="row g-4">
+        @foreach (var _event in events)
+        {
+            var modalId = $"eventDetailsModal-{_event.Id}";
+
+            <div class="col-lg-4 col-md-6">
+                <div class="card h-100 shadow-sm border">
+
+                    <!-- Title + Status -->
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="fw-bold mb-0">@_event.Name</h6>
+                        @* 
+                            <span
+                                class="badge @(_event.Status == "Approved" ? "bg-success" : _event.Status == "Pending" ? "bg-warning text-dark" : "bg-danger")">
+                                @_event.Status
+                            </span> *@
+                    </div>
+
+                    <div class="card-body d-flex flex-column">
+                        <p class="text-muted small mb-2">
+                            <strong>Date:</strong> @_event.Date.ToString("dd MMM yyyy")
+                        </p>
+                        <p class="text-muted small mb-3">
+                            <strong>Status:</strong> @_event.Status
+                        </p>
+
+                        <!-- View Details Button -->
+                        <button class="btn btn-sm btn-primary mt-auto w-100" data-bs-toggle="modal" data-bs-target="#@modalId">
+                            View Details
+                        </button>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- Event Details Modal -->
+            <div class="modal fade" id="@modalId" tabindex="-1">
+                <div class="modal-dialog modal-lg modal-dialog-centered">
+                    <div class="modal-content shadow">
+
+                        <div class="modal-header">
+                            <h5 class="modal-title fw-bold">
+                                @_event.Name - Event Details
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+
+                        <div class="modal-body">
+
+                            <!-- Requirements Section -->
+                            <h4 class="fw-bold mb-3 border-bottom pb-2">
+                                Requirements:
+                            </h4>
+
+                            @if (_event.Requirements?.Any() == true)
+                            {
+                                <table class="table table-hover table-bordered align-middle">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Type</th>
+                                            <th>Name</th>
+                                            <th class="text-center">Qty</th>
+                                            <th class="text-end">Price</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var req in _event.Requirements)
+                                        {
+                                            <tr>
+                                                <td>@req.Type</td>
+                                                <td>@req.Name</td>
+                                                <td class="text-center">@req.Quantity</td>
+                                                <td class="text-end">@req.Price</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            }
+                            else
+                            {
+                                <div class="text-center text-muted py-4">
+                                    No requirements available
+                                </div>
+                            }
+
+                            <p class="text-end m-0"><strong>Total:
+                                    @(_event.Requirements?.Sum(r => r.Price * r.Quantity) ?? 0)
+                                </strong></p>
+
+                        </div>
+
+                        <!-- Action Footer -->
+                        <div class="modal-footer d-flex justify-content-between">
+
+                            <div>
+                                <button class="btn btn-outline-danger" @onclick="() => DeleteEvent(_event)">
+                                    Delete
+                                </button>
+
+                                <button class="btn btn-outline-warning">
+                                    Reject
+                                </button>
+                            </div>
+
+                            <div>
+                                <button class="btn btn-outline-success">
+                                    Create Requisition
+                                </button>
+
+                                <button class="btn btn-primary" data-bs-dismiss="modal" @onclick="() => EditEvent(_event.Id)">
+                                    Edit Event
+                                </button>
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+
+}
+
+
+
+@inject SharedServices sharedServices
+@inject EventServices eventServices
+@inject IJSRuntime JS
+@inject NavigationManager nav
+@code {
+
+    private string id = "";
+    private bool loading = false;
+    List<Event> events = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        loading = true;
+        var claims = await sharedServices.GetClaims();
+        id = claims.Id;
+
+        try
+        {
+            events = (await eventServices.GetPendingEvents(id))
+            .OrderByDescending(e => e.Date.Date)
+            .ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error:", ex);
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private void EditEvent(Guid id)
+    {
+        nav.NavigateTo($"chairperson/edit-event?id={id}");
+    }
+
+
+    private async Task DeleteEvent(Event @event)
+    {
+
+        bool confirmDelete = await JS.InvokeAsync<bool>("confirm", $"Are you sure you want to delete {@event.Name}");
+
+        if (confirmDelete)
+        {
+            var response = await eventServices.DeleteEvent(@event.Id);
+
+            if (!response.Success)
+            {
+                await JS.InvokeVoidAsync("alert", $"Event not delete due to {response.Error}");
+            }
+            else
+            {
+                await JS.InvokeVoidAsync("alert", $"{@event.Name} has been deleted Successfully");
+                await OnInitializedAsync();
+            }
+        }
+    }
+}
