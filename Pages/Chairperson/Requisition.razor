@@ -1,0 +1,243 @@
+﻿@page "/chairperson/create-requisition"
+@layout ChairperosnLayout
+@attribute [Authorize(Roles = "chairperson")]
+
+<div class="container py-5">
+
+    <!-- ================= FORM SECTION ================= -->
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8 col-sm-12">
+            <div class="card shadow border rounded-4">
+                <div class="card-body p-4">
+                    <h4 class="text-center fw-bold mb-4">Create Requisition</h4>
+
+                    <EditForm Model="requisitionDto" OnValidSubmit="HandleSubmit">
+                        <DataAnnotationsValidator />
+
+                        <!-- Subject -->
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Subject</label>
+                            <input @bind-Value="requisitionDto.Subject"
+                                       @bind-Value:event="oninput"
+                                       class="form-control form-control"
+                                       placeholder="Enter requisition subject" />
+                            <ValidationMessage For="@(() => requisitionDto.Subject)" class="text-danger small" />
+                        </div>
+
+                        <!-- Body -->
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Application Body</label>
+                            <textarea @bind-Value="requisitionDto.Body"
+                                           @bind-Value:event="oninput"
+                                           rows="5"
+                                           class="form-control"
+                                           placeholder="Write application content here..." />
+                            <ValidationMessage For="@(() => requisitionDto.Body)" class="text-danger small" />
+                        </div>
+
+                        <div class="d-flex flex-column flex-md-row justify-content-end gap-4 mt-4">
+                            <button class="btn btn-outline-secondary w-100 w-md-auto">
+                                Cancel Requisition
+                            </button>
+                            <button type="submit" class="btn btn-success w-100 w-md-auto">
+                                Submit Requisition
+                            </button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= APPLICATION PREVIEW ================= -->
+    <div class="row justify-content-center mt-5">
+        <div class="col-lg-10">
+
+            <div class="card shadow-lg border rounded-4">
+                <div class="card-body p-5" id="application">
+
+                    <!-- Header -->
+                    <div class="d-flex align-items-center gap-4 border-bottom pb-3 mb-4">
+                        <img src="/images/biit_logo.png"
+                             alt="BIIT Logo"
+                             style="max-width:80px;" />
+                        <div>
+                            <h4 class="fw-bold mb-0">Barani Institute Of Information Technology</h4>
+                            <small class="text-muted">Official Event Requisition Application</small>
+                        </div>
+                    </div>
+
+                    <!-- Subject + Date -->
+                    <div class="mb-4">
+                        <p class="mb-1">
+                            <strong>Subject:</strong>
+                            @(string.IsNullOrWhiteSpace(requisitionDto.Subject)
+                                                        ? "__________________________"
+                                                        : requisitionDto.Subject)
+                        </p>
+
+                        <p class="mb-0">
+                            <strong>Event Date:</strong>
+                            @event_date.ToString("dd MMM yyyy")
+                        </p>
+                    </div>
+
+                    <!-- Body -->
+                    <div class="mb-4">
+                        <p>Respected Sir,</p>
+
+                        <p style="white-space: pre-line;">
+                            @(string.IsNullOrWhiteSpace(requisitionDto.Body)
+                                                        ? "(Application body will appear here...)"
+                                                        : requisitionDto.Body)
+                        </p>
+                    </div>
+
+                    <!-- Requirements Table -->
+                    @if (requirements.Any())
+                    {
+                        <h5>List of Requirement</h5>
+                        <div class="table-responsive mb-4">
+                            <table class="table table-bordered align-middle">
+                                <thead class="table-light text-center">
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Name</th>
+                                        <th>Qty</th>
+                                        <th>Unit Price</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var req in requirements)
+                                    {
+                                        <tr>
+                                            <td>@req.Type</td>
+                                            <td>@req.Name</td>
+                                            <td class="text-center">@req.Quantity</td>
+                                            <td class="text-end">
+                                                @req.Price.ToString("N2")
+                                            </td>
+                                            <td class="text-end fw-semibold">
+                                                @( (req.Quantity * req.Price).ToString("N2") )
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+
+                                <!-- Total Footer -->
+                                <tfoot class="table-light">
+                                    <tr>
+                                        <td colspan="4" class="text-end fw-bold">
+                                            Total Requested Amount:
+                                        </td>
+                                        <td class="text-end fw-bold text-primary">
+                                            @TotalRequestedAmount.ToString("N2")
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-center text-muted">
+                            No requirements added for this event.
+                        </p>
+                    }
+
+                    <!-- Signature Section -->
+                    <div class="mt-5 pt-4 border-top">
+                        <p class="mb-1 fw-semibold">
+                            @chairpersonName
+                        </p>
+                        <p class="mb-4 text-muted">
+                            @chairpersonRole (@chairpersonSocietyName)
+                        </p>
+
+                        <p class="mb-1 fw-semibold">
+                            Mr. Shahid Rashid
+                        </p>
+                        <p class="text-muted">
+                            Assistant Director Student Affairs
+                        </p>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+
+
+@inject EventServices eventServices
+@inject MemberServices memberServices
+@inject SharedServices sharedServices
+@inject IJSRuntime JS
+@code {
+    [SupplyParameterFromQuery(Name = "id")]
+    public Guid? EventId { get; set; }
+
+    public Guid chairpersonId { get; set; }
+    public string chairpersonName = "";
+    public string chairpersonRole = "";
+    public string chairpersonSocietyName = "";
+
+    private string event_name = "";
+    private DateTime event_date;
+    private List<EventRequirementDto> requirements = new();
+    private SendEventRequisitionDto requisitionDto = new();
+    private decimal TotalRequestedAmount =>
+        requirements.Sum(r => r.Quantity * r.Price);
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // Get chairperson id to get details for requisition form
+        var claims = await sharedServices.GetClaims();
+        chairpersonId = Guid.Parse(claims.Id);
+
+        var chaiperson = await memberServices.GetChairpersonDetailsForRequisition(chairpersonId);
+        if (chaiperson == null)
+        {
+            await JS.InvokeVoidAsync("alert", "Chairperson not found");
+            return;
+        }
+
+        chairpersonName = chaiperson.Name;
+        chairpersonRole = chaiperson.Role;
+        chairpersonSocietyName = chaiperson.SocietyName;
+
+        var @event = await eventServices.GetEventById(EventId!.Value);
+
+        if (@event == null)
+        {
+            await JS.InvokeVoidAsync("alert", "Event not found");
+            return;
+        }
+
+        event_name = @event.Name;
+        event_date = @event.Date;
+
+        requirements.Clear();
+        foreach (var requirement in @event.Requirements)
+        {
+            requirements.Add(
+                new EventRequirementDto()
+                {
+                    Type = requirement.Type,
+                    Name = requirement.Name,
+                    Quantity = requirement.Quantity,
+                    Price = requirement.Price
+                }
+            );
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        await JS.InvokeVoidAsync("alert", $"Subject: {requisitionDto.Subject}, Body: {requisitionDto.Body}");
+    }
+}

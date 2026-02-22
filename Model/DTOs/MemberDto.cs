@@ -25,4 +25,11 @@ namespace Project.Frontend.Model.DTOs
         public required string NewHashPassword { get; set; }
         public string? Picture { get; set; }
     }
+
+    public class ChairpersonDetailForRequisitionFormDto
+    {
+        public required string Name { get; set; }
+        public required string Role { get; set; }
+        public required string SocietyName { get; set; }
+    }
 }

@@ -115,13 +115,13 @@ else
                                     Delete
                                 </button>
 
-                                <button class="btn btn-outline-warning">
+                                <button class="btn btn-outline-warning" >
                                     Reject
                                 </button>
                             </div>
 
                             <div>
-                                <button class="btn btn-outline-success">
+                                <button class="btn btn-outline-success" data-bs-dismiss="modal" @onclick="() => CreateRequisition(_event.Id)">
                                     Create Requisition
                                 </button>
 
@@ -135,6 +135,9 @@ else
                     </div>
                 </div>
             </div>
+
+            <!--Rejection Model-->
+
         }
     </div>
 
@@ -178,6 +181,11 @@ else
     private void EditEvent(Guid id)
     {
         nav.NavigateTo($"chairperson/edit-event?id={id}");
+    }
+
+    private void CreateRequisition(Guid id)
+    {
+        nav.NavigateTo($"chairperson/create-requisition?id={id}");
     }
 
 

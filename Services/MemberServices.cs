@@ -50,5 +50,19 @@ namespace Project.Frontend.Services
                 return new ResponseResult() { Success = false, Error = ex.Message };
             }
         }
+
+        public async Task<ChairpersonDetailForRequisitionFormDto?> GetChairpersonDetailsForRequisition(Guid memberId)
+        {
+            var response = await httpClient.GetAsync($"ChairPerson/detailsForRequisition?id={memberId}");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            var memberDetails = await response.Content.ReadFromJsonAsync<ChairpersonDetailForRequisitionFormDto>();
+
+            return memberDetails;
+        }
     }
 }

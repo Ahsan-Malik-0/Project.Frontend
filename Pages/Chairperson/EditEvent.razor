@@ -361,8 +361,16 @@
 
         if (response.Success)
         {
-            await JS.InvokeVoidAsync("alert", "Event Updated Successfully");
-            nav.NavigateTo("/president");
+            var alertResposse = await JS.InvokeAsync<bool>("confirm", "Event Updated Successfully, do you want to create Requisition");
+
+            if(alertResposse)
+            {
+                nav.NavigateTo($"chairperson/create-requisition?id={dto.Id}");
+            }
+            else
+            {
+                nav.NavigateTo("chairperson/events-requests");
+            }
         }
         else
         {
