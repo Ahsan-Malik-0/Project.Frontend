@@ -9,8 +9,11 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
+// Get the API base URL from environment or use default
+var apiBaseUrl = builder.Configuration["API_BASE_URL"] ?? "https://localhost:7148/api/";
+
 builder.Services.AddScoped(sp => new HttpClient { 
-    BaseAddress = new Uri("https://localhost:7148/api/") 
+    BaseAddress = new Uri(apiBaseUrl) 
 });
 
 builder.Services.AddCascadingAuthenticationState();
