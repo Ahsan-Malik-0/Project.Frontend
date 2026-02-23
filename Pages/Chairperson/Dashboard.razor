@@ -5,25 +5,6 @@
 
 <h3>Chairperson Dashboard</h3>
 
-<h3>Live Preview</h3>
-<EditForm>
-    <input 
-        @bind="liveText" 
-        @bind:event="oninput" 
-        placeholder="Type here..." />
-
-    <InputText @bind-Value="liveText"
-               @bind-Value:event="oninput"/>
-</EditForm>
-<input 
-    @bind="liveText" 
-    @bind:event="oninput" 
-    placeholder="Type here..." />
-<p>Hello</p>
-<div class="preview-box">
-    @liveText
-</div>
 
 @code {
-    private string liveText = "";
 }
