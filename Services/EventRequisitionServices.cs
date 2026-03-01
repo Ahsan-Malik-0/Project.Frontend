@@ -5,11 +5,11 @@ using System.Text.Json.Nodes;
 
 namespace Project.Frontend.Services
 {
-    public class RequisitionServices
+    public class EventRequisitionServices
     {
         private readonly HttpClient httpClient;
 
-        public RequisitionServices(HttpClient httpClient)
+        public EventRequisitionServices(HttpClient httpClient)
         {
             this.httpClient = httpClient;
         }
@@ -34,6 +34,27 @@ namespace Project.Frontend.Services
             catch (Exception ex)
             {
                 return new ResponseResult() { Success = false, Error = ex.Message };
+            }
+        }
+
+        public async Task<List<PendingEventRequisitionsDto>> GetPendingEventRequisitions(Guid id)
+        {
+            try
+            {
+                var response = await httpClient.GetAsync($"ChairPerson/getPendingRequisitions?memberId={id}");
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    return new List<PendingEventRequisitionsDto>();
+                }
+
+                var pendingRequisitions = await response.Content.ReadFromJsonAsync<List<PendingEventRequisitionsDto>>();
+                return pendingRequisitions!;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return new List<PendingEventRequisitionsDto>();
             }
         }
     }

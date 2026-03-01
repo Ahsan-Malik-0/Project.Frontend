@@ -23,5 +23,6 @@ builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddScoped<SharedServices>();
 builder.Services.AddScoped<EventServices>();
 builder.Services.AddScoped<MemberServices>();
+builder.Services.AddScoped<EventRequisitionServices>();
 
 await builder.Build().RunAsync();

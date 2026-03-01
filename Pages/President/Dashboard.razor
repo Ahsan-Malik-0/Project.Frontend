@@ -80,7 +80,7 @@ else
                                             <th>Type</th>
                                             <th>Name</th>
                                             <th>Quantity</th>
-                                            <th>Price</th>
+                                            <th>Price (per unit)</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -102,6 +102,13 @@ else
                                     No requirements available
                                 </p>
                             }
+
+                            <p class="text-end m-0">
+                                <strong>
+                                    Total:
+                                    @(_event.Requirements?.Sum(r => r.Price * r.Quantity) ?? 0)
+                                </strong>
+                            </p>
                         </div>
 
                     </div>

@@ -12,4 +12,13 @@ namespace Project.Frontend.Model.DTOs
         public decimal requestedAmoount {  get; set; }
         public Guid EventId { get; set; }
     }
+
+    public class PendingEventRequisitionsDto
+    {
+        public Guid Id { get; set; }
+        public required string Subject { get; set; }
+        public required string Body { get; set; }
+        public required string Status { get; set; }
+        public required ICollection<EventRequirementDto> EventRequirements { get; set; }
+    }
 }
