@@ -174,9 +174,8 @@
 
 
 
-@inject EventServices eventServices
-@inject MemberServices memberServices
-@inject SharedServices sharedServices
+@inject ChairpersonServices chairpersonServices
+@inject ClaimServices claimServices
 @inject IJSRuntime JS
 @code {
     [SupplyParameterFromQuery(Name = "id")]
@@ -197,10 +196,10 @@
     protected override async Task OnParametersSetAsync()
     {
         // Get chairperson id to get details for requisition form
-        var claims = await sharedServices.GetClaims();
+        var claims = await claimServices.GetClaims();
         chairpersonId = Guid.Parse(claims.Id);
 
-        var chaiperson = await memberServices.GetChairpersonDetailsForRequisition(chairpersonId);
+        var chaiperson = await chairpersonServices.GetDetailsForRequisition(chairpersonId);
         if (chaiperson == null)
         {
             await JS.InvokeVoidAsync("alert", "Chairperson not found");
@@ -211,7 +210,7 @@
         chairpersonRole = chaiperson.Role;
         chairpersonSocietyName = chaiperson.SocietyName;
 
-        var @event = await eventServices.GetEventById(EventId!.Value);
+        var @event = await chairpersonServices.GetEventById(EventId!.Value);
 
         if (@event == null)
         {

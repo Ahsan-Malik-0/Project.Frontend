@@ -146,8 +146,8 @@ else
 
 
 
-@inject SharedServices sharedServices
-@inject EventServices eventServices
+@inject ClaimServices claimServices
+@inject ChairpersonServices chairpersonServices
 @inject IJSRuntime JS
 @inject NavigationManager nav
 @code {
@@ -159,12 +159,12 @@ else
     protected override async Task OnInitializedAsync()
     {
         loading = true;
-        var claims = await sharedServices.GetClaims();
+        var claims = await claimServices.GetClaims();
         id = claims.Id;
 
         try
         {
-            events = (await eventServices.GetPendingEvents(id))
+            events = (await chairpersonServices.GetPendingEvents(id))
             .OrderByDescending(e => e.Date.Date)
             .ToList();
         }
@@ -196,7 +196,7 @@ else
 
         if (confirmDelete)
         {
-            var response = await eventServices.DeleteEvent(@event.Id);
+            var response = await chairpersonServices.DeleteEvent(@event.Id);
 
             if (!response.Success)
             {

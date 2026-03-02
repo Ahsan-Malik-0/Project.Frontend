@@ -189,7 +189,7 @@
 
 </div> <!-- container -->
 
-@inject EventServices eventServices
+@inject ChairpersonServices chairpersonServices
 @inject IJSRuntime JS
 @inject NavigationManager nav
 @code {
@@ -214,7 +214,7 @@
     {
         // if (EventId != null)
         // {
-        var @event = await eventServices.GetEventById(EventId!.Value);
+        var @event = await chairpersonServices.GetEventById(EventId!.Value);
 
         if (@event == null)
         {
@@ -358,7 +358,7 @@
             Requirements = requirements
         };
 
-        var response = await eventServices.UpdateEvent(dto);
+        var response = await chairpersonServices.UpdateEvent(dto);
 
         if (response.Success)
         {

@@ -192,8 +192,8 @@
     </div>
 
 </div> <!-- container -->
-@inject EventServices eventServices
-@inject SharedServices sharedServices
+@inject PresidentServices presidentServices
+@inject ClaimServices claimServices
 @inject NavigationManager nav
 @inject IJSRuntime JS
 
@@ -207,7 +207,7 @@
     {
         if(isEventEditMode)
         {
-            var @event = await eventServices.GetEventById(EventId!.Value);
+            var @event = await presidentServices.GetEventById(EventId!.Value);
 
             if (@event == null)
             {
@@ -296,7 +296,7 @@
                 Requirements = requirements
             };
 
-            var response = await eventServices.UpdateEvent(dto);
+            var response = await presidentServices.UpdateEvent(dto);
 
             if (response.Success)
             {
@@ -311,8 +311,8 @@
         else
         {
 
-            var claims = await sharedServices.GetClaims();
-            var societyId = await sharedServices.GetSocietyIdAsync(claims.Id);
+            var claims = await claimServices.GetClaims();
+            var societyId = await presidentServices.GetSocietyIdAsync(claims.Id);
 
             if (societyId is null)
             {
@@ -328,7 +328,7 @@
                 Requirements = requirements
             };
 
-            var response = await eventServices.CreateEventByPresident(dto);
+            var response = await presidentServices.CreateEvent(dto);
 
             if (response.Success)
             {
@@ -343,8 +343,6 @@
     }
 
 
-
-
     private void OnStatusChanged(ChangeEventArgs e)
     {
         req_type = e.Value?.ToString() ?? "financial";
@@ -354,7 +352,6 @@
             req_price = 0;
         }
     }
-
 
 
     private void HandleAddOrUpdateRequirement()
