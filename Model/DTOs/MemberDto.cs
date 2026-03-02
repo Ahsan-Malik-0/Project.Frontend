@@ -21,8 +21,8 @@ namespace Project.Frontend.Model.DTOs
         public required string Id { get; set; }
         public required string Name { get; set; }
         public required string Username { get; set; }
-        public required string OldHashPassword { get; set; }
-        public required string NewHashPassword { get; set; }
+        public string? OldHashPassword { get; set; }
+        public string? NewHashPassword { get; set; }
         public string? Picture { get; set; }
     }
 
