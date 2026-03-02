@@ -1,6 +1,5 @@
 ﻿@page "/president"
 
-
 @layout PresidentLayout
 
 @attribute [Authorize(Roles = "president")]
@@ -120,8 +119,8 @@ else
 
 
 
-@inject SharedServices sharedServices
-@inject EventServices eventServices
+@inject ClaimServices claimServices
+@inject PresidentServices presidentServices
 @inject IJSRuntime JS
 @inject NavigationManager nav
 @code {
@@ -132,12 +131,12 @@ else
     protected override async Task OnInitializedAsync()
     {
         loading = true;
-        var claims = await sharedServices.GetClaims();
+        var claims = await claimServices.GetClaims();
         id = claims.Id;
 
         try
         {
-            events = (await eventServices.GetPendingEvents(id))
+            events = (await presidentServices.GetPendingEvents(id))
             .OrderByDescending(e => e.Date.Date)
             .ToList();
         }
@@ -164,7 +163,7 @@ else
 
         if (confirmDelete)
         {
-            var response = await eventServices.DeleteEvent(@event.Id);
+            var response = await presidentServices.DeleteEvent(@event.Id);
 
             if (!response.Success)
             {

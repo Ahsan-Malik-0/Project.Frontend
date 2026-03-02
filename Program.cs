@@ -3,7 +3,10 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Project.Frontend;
+using Project.Frontend.Chairperson.Services;
+using Project.Frontend.President.Services;
 using Project.Frontend.Services;
+using Project.Frontend.Shared.Servives;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -20,9 +23,8 @@ builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddAuthorizationCore();
 builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthStateProvider>();
 builder.Services.AddBlazoredLocalStorage();
-builder.Services.AddScoped<SharedServices>();
-builder.Services.AddScoped<EventServices>();
-builder.Services.AddScoped<MemberServices>();
-builder.Services.AddScoped<EventRequisitionServices>();
+builder.Services.AddScoped<ClaimServices>();
+builder.Services.AddScoped<PresidentServices>();
+builder.Services.AddScoped<ChairpersonServices>();
 
 await builder.Build().RunAsync();

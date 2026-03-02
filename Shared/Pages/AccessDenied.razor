@@ -31,13 +31,14 @@
 </div>
 
 
-@inject SharedServices sharedServices
+@inject ClaimServices claimServices
+
 @code {
     string role = "";
 
     protected override async Task OnInitializedAsync()
     {
-        var claims = await sharedServices.GetClaims();
+        var claims = await claimServices.GetClaims();
         role = claims.Role;
     }
 

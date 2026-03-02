@@ -117,8 +117,8 @@ else
 }
 
 
-@inject SharedServices sharedServices
-@inject EventServices eventServices
+@inject ClaimServices claimServices
+@inject PresidentServices presidentServices
 @code {
     private string id = "";
     private bool loading = false;
@@ -127,12 +127,12 @@ else
     protected override async Task OnInitializedAsync()
     {
         loading = true;
-        var claims = await sharedServices.GetClaims();
+        var claims = await claimServices.GetClaims();
         id = claims.Id;
 
         try
         {
-            events = (await eventServices.GetAcceptedEvents(id))
+            events = (await presidentServices.History(id))
             .OrderByDescending(e => e.Date.Date)
             .ToList();
         }

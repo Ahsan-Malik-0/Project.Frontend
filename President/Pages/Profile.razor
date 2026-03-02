@@ -127,7 +127,7 @@ else
 
 
 @inject PresidentServices presidentServices
-@inject SharedServices sharedServices
+@inject ClaimServices claimServices
 @inject IJSRuntime JS
 @code {
     private string id = "";
@@ -150,7 +150,7 @@ else
 
         try
         {
-            var claims = await sharedServices.GetClaims(); 
+            var claims = await claimServices.GetClaims();
             id = claims.Id;
 
             memberProfile = await presidentServices.GetProfile(id);

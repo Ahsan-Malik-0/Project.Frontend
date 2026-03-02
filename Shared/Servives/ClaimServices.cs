@@ -6,12 +6,12 @@ using System.Security.Claims;
 
 namespace Project.Frontend.Shared.Servives
 {
-    public class ClaimnServices
+    public class ClaimServices
     {
         private readonly AuthenticationStateProvider _provider;
         public HttpClient httpClient;
 
-        public ClaimnServices(AuthenticationStateProvider provider, HttpClient httpClient)
+        public ClaimServices(AuthenticationStateProvider provider, HttpClient httpClient)
         {
             _provider = provider;
             this.httpClient = httpClient;
