@@ -33,7 +33,7 @@ else
                         <!-- Header -->
                         <div class="d-flex justify-content-between align-items-start mb-2">
                             <h6 class="fw-bold mb-0">
-                                @pr.Subject
+                                @pr.EventName
                             </h6>
 
                             <span class="badge p-2  @(pr.Status == "Approved" ? "bg-success" : pr.Status == "Pending" ? "bg-warning text-dark" : "bg-danger")">
@@ -43,9 +43,7 @@ else
 
                         <!-- Body Preview -->
                         <p class="text-muted small mb-3">
-                            @(pr.Body.Length > 100
-                                                ? pr.Body.Substring(0, 100) + "..."
-                                                : pr.Body)
+                            @(pr.EventDate)
                         </p>
 
                         <!-- Action Buttons -->
@@ -58,7 +56,7 @@ else
                             <button class="btn btn-sm btn-primary w-50"
                                     data-bs-toggle="modal"
                                     data-bs-target="#@modalId">
-                                View Requirements
+                                View Requisition
                             </button>
                         </div>
 
@@ -74,8 +72,9 @@ else
                         <div class="modal-header border-0 p-0">
                             <button type="button"
                                     class="btn-close mt-3"
-                                    data-bs-dismiss="modal"></button>
-                            </div>
+                                    data-bs-dismiss="modal">
+                            </button>
+                        </div>
                                
                         
                             
@@ -95,11 +94,11 @@ else
                         <!-- Subject + Date -->
                         <div class="mb-4">
                             <p class="mb-1">
-                                <strong>Subject:</strong>
+                                @* <strong>Subject:</strong>
                                 @(string.IsNullOrWhiteSpace(pr.Subject)
                                                         ? "__________________________"
-                                                        : pr.Subject)
-                                                                             </p>
+                                                        : pr.Subject) *@
+                            </p>
 
                             <p class="mb-0">
                                 <strong>Event Date:</strong>
@@ -112,15 +111,15 @@ else
                             <p>Respected Sir,</p>
 
                             <p style="white-space: pre-line;">
-                                @(string.IsNullOrWhiteSpace(pr.Body)
+                                @* @(string.IsNullOrWhiteSpace(pr.Body)
                                                         ? "(Application body will appear here...)"
-                                                        : pr.Body)
+                                                        : pr.Body) *@
                     </p>
                 </div>
 
                         <!-- Requirements Table -->
-                @if (pr.EventRequirements.Any())
-                        {
+                        @* @if (pr.EventRequirements.Any()) *@
+                        @* { *@
                             <h5>List of Requirement</h5>
                             <div class="table-responsive mb-4">
                                 <table class="table table-bordered align-middle">
@@ -134,7 +133,7 @@ else
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach (var req in pr.EventRequirements)
+                                        @* @foreach (var req in pr.EventRequirements)
                                         {
                                             <tr>
                                                 <td>@req.Type</td>
@@ -147,7 +146,7 @@ else
                                                     @( (req.Quantity * req.Price).ToString("N2") )
                                                 </td>
                                             </tr>
-                                        }
+                                        } *@
                                     </tbody>
 
                                     <!-- Total Footer -->
@@ -164,12 +163,12 @@ else
                                 </table>
                             </div>
                         }
-                        else
+                        @* else
                         {
                             <p class="text-center text-muted">
                                 No requirements added for this event.
                             </p>
-                        }
+                        } *@
 
                         <!-- Signature Section -->
                         <div class="mt-2 pt-4 border-top">
@@ -195,14 +194,39 @@ else
     </div>
 }
 
+@* <div style="position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; width: 90%; max-width: 500px;">
+    @if (showAlert)
+    {
+        <div class="alert alert-warning alert-dismissible fade show" role="alert" style="box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+            <strong>Holy guacamole!</strong> You should check in on some of those fields below.
+            <button @onclick="CloseAlert" type="button" class="btn-close" aria-label="Close"></button>
+        </div>
+    }
+</div>
+
+<button @onclick="ShowAlert" class="btn btn-primary">Show Alert</button> *@
+
 @inject ClaimServices claimServices
 @inject ChairpersonServices chairpersonServices
 @inject IJSRuntime JS
 @code {
+    // bool showAlert = false;
+
+    // void ShowAlert()
+    // {
+    //     showAlert = true;
+    // }
+
+    // void CloseAlert()
+    // {
+    //     showAlert = false;
+    // }
+
+
     private bool loading = false;
     private Guid Id;
 
-    List<PendingEventRequisitionsDto> pendingEventRequisitions = new();
+    List<PendingEventRequisitionDetailsDto> pendingEventRequisitions = new();
 
     protected override async Task OnInitializedAsync()
     {

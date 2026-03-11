@@ -15,12 +15,11 @@ namespace Project.Frontend.Chairperson.Services
             this.httpClient = httpClient;
         }
 
-
         public async Task<List<Event>> GetPendingEvents(string memberId)
         {
             try
             {
-                var respnse = await httpClient.GetAsync($"president/pendingEvents?memberId={memberId}");
+                var respnse = await httpClient.GetAsync($"chairperson/pendingEvents?memberId={memberId}");
 
                 if (!respnse.IsSuccessStatusCode)
                     return new List<Event>();
@@ -35,11 +34,11 @@ namespace Project.Frontend.Chairperson.Services
             }
         }
 
-        public async Task<ResponseResult> DeleteEvent(Guid eventId)
+        public async Task<ResponseResult> SoftDeleteEvent(Event @event)
         {
             try
             {
-                var response = await httpClient.DeleteAsync($"president/deleteEvent/{eventId}");
+                var response = await httpClient.PutAsJsonAsync($"ChairPerson/softDeleteEvent", @event);
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -61,7 +60,7 @@ namespace Project.Frontend.Chairperson.Services
         {
             try
             {
-                var response = await httpClient.PutAsJsonAsync("president/updateEvent", updateEventDto);
+                var response = await httpClient.PutAsJsonAsync("chairperson/updateEvent", updateEventDto);
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -84,7 +83,7 @@ namespace Project.Frontend.Chairperson.Services
         {
             try
             {
-                var response = await httpClient.GetAsync($"president/getEventById?eventId={societyId}");
+                var response = await httpClient.GetAsync($"chairperson/getEventById?eventId={societyId}");
 
                 if (!response.IsSuccessStatusCode)
                     return null;
@@ -101,7 +100,7 @@ namespace Project.Frontend.Chairperson.Services
             }
         }
 
-        public async Task<List<PendingEventRequisitionsDto>> GetPendingRequisitions(Guid id)
+        public async Task<List<PendingEventRequisitionDetailsDto>> GetPendingRequisitions(Guid id)
         {
             try
             {
@@ -109,16 +108,16 @@ namespace Project.Frontend.Chairperson.Services
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    return new List<PendingEventRequisitionsDto>();
+                    return new List<PendingEventRequisitionDetailsDto>();
                 }
 
-                var pendingRequisitions = await response.Content.ReadFromJsonAsync<List<PendingEventRequisitionsDto>>();
-                return pendingRequisitions!;
+                var pendingRequisitionDetails = await response.Content.ReadFromJsonAsync<List<PendingEventRequisitionDetailsDto>>();
+                return pendingRequisitionDetails!;
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
-                return new List<PendingEventRequisitionsDto>();
+                return new List<PendingEventRequisitionDetailsDto>();
             }
         }
 
@@ -147,7 +146,7 @@ namespace Project.Frontend.Chairperson.Services
 
         public async Task<ChairpersonDetailForRequisitionFormDto?> GetDetailsForRequisition(Guid memberId)
         {
-            var response = await httpClient.GetAsync($"ChairPerson/detailsForRequisition?id={memberId}");
+            var response = await httpClient.GetAsync($"chairperson/detailsForRequisition?id={memberId}");
 
             if (!response.IsSuccessStatusCode)
             {

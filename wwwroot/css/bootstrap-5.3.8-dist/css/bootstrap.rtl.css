@@ -6724,6 +6724,7 @@ textarea.form-control-lg {
   width: 100vw;
   height: 100vh;
   background-color: #000;
+  margin: auto;
 }
 .offcanvas-backdrop.fade {
   opacity: 0;

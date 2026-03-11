@@ -57,11 +57,11 @@ namespace Project.Frontend.President.Services
             }
         }
 
-        public async Task<ResponseResult> DeleteEvent(Guid eventId)
+        public async Task<ResponseResult> SoftDeleteEvent(Event @event)
         {
             try
             {
-                var response = await httpClient.DeleteAsync($"president/deleteEvent/{eventId}");
+                var response = await httpClient.PutAsJsonAsync($"President/softDeleteEvent", @event);
 
                 if (!response.IsSuccessStatusCode)
                 {
