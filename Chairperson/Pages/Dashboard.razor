@@ -1,6 +1,6 @@
 ﻿@page "/chairperson"
 
-@layout ChairperosnLayout
+@layout ChairpersonLayout
 
 @attribute [Authorize(Roles = "chairperson")]
 
@@ -43,7 +43,7 @@ else
 
                         <!-- Body Preview -->
                         <p class="text-muted small mb-3">
-                            @(pr.EventDate)
+                            @(pr.EventDate.ToString("dd MMM yyyy"))
                         </p>
 
                         <!-- Action Buttons -->

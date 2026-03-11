@@ -2,6 +2,7 @@
 using Project.Frontend.Model.DTOs;
 using System.Net.Http.Json;
 using System.Text.Json.Nodes;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Project.Frontend.Chairperson.Services
 {
@@ -156,6 +157,66 @@ namespace Project.Frontend.Chairperson.Services
             var memberDetails = await response.Content.ReadFromJsonAsync<ChairpersonDetailForRequisitionFormDto>();
 
             return memberDetails;
+        }
+
+        public async Task<ResponseResult> RejectEvent(AcceptRejectEventDto acceptRejectEvent)
+        {
+            try
+            {
+                var response = await httpClient.PutAsJsonAsync("ChairPerson/acceptRejectEvent", acceptRejectEvent);
+                if (!response.IsSuccessStatusCode)
+                {
+                    var resString = await response.Content.ReadAsStringAsync();
+                    var jsonNode = JsonNode.Parse(resString);
+                    var error = jsonNode?["errors"]?.ToString() ?? string.Empty;
+
+                    return new ResponseResult() { Success = false, Error = error };
+                }
+
+                return new ResponseResult() { Success = true };
+
+            }
+            catch (Exception ex)
+            {
+                return new ResponseResult() { Success = false, Error = ex.Message };
+            }
+        }
+
+        public async Task<MemberProfileDto?> GetProfile(string memberId)
+        {
+            var response = await httpClient.GetAsync($"ChairPerson/viewProfile?memberId={memberId}");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            var memberProfile = await response.Content.ReadFromJsonAsync<MemberProfileDto>();
+
+            return memberProfile;
+        }
+
+        public async Task<ResponseResult> UpdateProfile(MemberProfileUpdateDto updatedProfile)
+        {
+            try
+            {
+                var reponse = await httpClient.PutAsJsonAsync("Chairperson/updateProfile", updatedProfile);
+
+                if (!reponse.IsSuccessStatusCode)
+                {
+                    var resString = await reponse.Content.ReadAsStringAsync();
+                    var jsonNode = JsonNode.Parse(resString);
+                    var error = jsonNode?["errors"]?.ToString();
+
+                    return new ResponseResult() { Success = false, Error = error };
+                }
+                return new ResponseResult() { Success = true };
+
+            }
+            catch (Exception ex)
+            {
+                return new ResponseResult() { Success = false, Error = ex.Message };
+            }
         }
     }
 }

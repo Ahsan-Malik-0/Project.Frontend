@@ -1,5 +1,5 @@
 ﻿@page "/chairperson/events-requests"
-@layout ChairperosnLayout
+@layout ChairpersonLayout
 
 @attribute [Authorize(Roles = "chairperson")]
 
@@ -182,7 +182,7 @@ else
 
                         <button class="btn btn-danger"
                                 data-bs-dismiss="modal"
-                                @onclick="SendRejection">
+                                @onclick="() => SendRejection(selectedEvent!)">
                             Send
                         </button>
                     </div>
@@ -202,6 +202,9 @@ else
 @inject NavigationManager nav
 @code {
 
+    private string id = "";
+    private bool loading = false;
+    List<Event> events = new();
     Event? selectedEvent;
     string rejectMessage = "";
 
@@ -210,7 +213,7 @@ else
         selectedEvent = ev;
     }
 
-    private async Task SendRejection()
+    private async Task SendRejection(Event rejectedEvent)
     {
         if (selectedEvent == null)
             return;
@@ -220,24 +223,26 @@ else
             await JS.InvokeVoidAsync("alert", "Please enter rejection message");
             return;
         }
-
-        // var response = await chairpersonServices.RejectEvent(selectedEvent.Id, rejectMessage);
-
-        // if (!response.Success)
-        // {
-        //     await JS.InvokeVoidAsync("alert", response.Error);
-        // }
         else
         {
-            await JS.InvokeVoidAsync("alert", "Event rejected successfully");
+            AcceptRejectEventDto acceptReject = new AcceptRejectEventDto()
+            {
+                Id = rejectedEvent.Id,
+                Status = "rejected",
+                Message = rejectMessage
+            };
+
+            var response = await chairpersonServices.RejectEvent(acceptReject);
+
+            if(response.Success)
+                await JS.InvokeVoidAsync("alert", "Event rejected successfully");
+            else
+                await JS.InvokeVoidAsync("alert", $"An error accure while rejecting the event: {response.Error}"); 
+            
             rejectMessage = "";
             await OnInitializedAsync();
         }
     }
-
-    private string id = "";
-    private bool loading = false;
-    List<Event> events = new();
 
     protected override async Task OnInitializedAsync()
     {

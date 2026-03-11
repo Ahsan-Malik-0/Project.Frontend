@@ -1,5 +1,5 @@
 ﻿@page "/chairperson/create-requisition"
-@layout ChairperosnLayout
+@layout ChairpersonLayout
 @using Microsoft.AspNetCore.Components
 @attribute [Authorize(Roles = "chairperson")]
 
@@ -37,7 +37,7 @@
                         </div>
 
                         <div class="d-flex flex-column flex-md-row justify-content-end gap-4 mt-4">
-                            <button class="btn btn-outline-secondary w-100 w-md-auto">
+                            <button class="btn btn-outline-secondary w-100 w-md-auto" @onclick="HandleCancel">
                                 Cancel Requisition
                             </button>
                             <button type="submit" class="btn btn-success w-100 w-md-auto">
@@ -176,6 +176,7 @@
 
 @inject ChairpersonServices chairpersonServices
 @inject ClaimServices claimServices
+@inject NavigationManager nav
 @inject IJSRuntime JS
 @code {
     [SupplyParameterFromQuery(Name = "id")]
@@ -239,5 +240,13 @@
     private async Task HandleSubmit()
     {
         await JS.InvokeVoidAsync("alert", $"Subject: {requisitionDto.Subject}, Body: {requisitionDto.Body}");
+    }
+
+    private async Task HandleCancel()
+    {
+        var response = await JS.InvokeAsync<bool>("confirm", "Are you sure, you want to cancel requisition");
+
+        if (response)
+            nav.NavigateTo("chairperson/events-requests");
     }
 }

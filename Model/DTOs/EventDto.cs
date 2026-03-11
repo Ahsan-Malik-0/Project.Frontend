@@ -18,4 +18,14 @@ namespace Project.Frontend.Model.DTOs
         public DateTime Date { get; set; }
         public required ICollection<EventRequirementDto> Requirements { get; set; }
     }
+
+    public class AcceptRejectEventDto
+    {
+        [Required(ErrorMessage = "Id is required")]
+        public Guid Id { get; set; }
+
+        [Required(ErrorMessage = "Status is required")]
+        public required string Status { get; set; }
+        public string? Message { get; set; }
+    }
 }
