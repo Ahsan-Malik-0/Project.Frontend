@@ -2,7 +2,6 @@
 using Project.Frontend.Model.DTOs;
 using System.Net.Http.Json;
 using System.Text.Json.Nodes;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Project.Frontend.Chairperson.Services
 {

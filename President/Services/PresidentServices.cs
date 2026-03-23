@@ -18,7 +18,7 @@ namespace Project.Frontend.President.Services
         {
             try
             {
-                var respnse = await httpClient.GetAsync($"president/pendingEvents?memberId={memberId}");
+                var respnse = await httpClient.GetAsync($"president/pendingEvents/{memberId}");
 
                 if (!respnse.IsSuccessStatusCode)
                     return new List<Event>();
@@ -57,11 +57,34 @@ namespace Project.Frontend.President.Services
             }
         }
 
-        public async Task<ResponseResult> SoftDeleteEvent(Event @event)
+        public async Task<ResponseResult> UpdateEvent(UpdateEventDto updateEventDto)
         {
             try
             {
-                var response = await httpClient.PutAsJsonAsync($"President/softDeleteEvent", @event);
+                var response = await httpClient.PutAsJsonAsync($"president/updateEvent/{updateEventDto.Id}", updateEventDto);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var resString = await response.Content.ReadAsStringAsync();
+                    var jsonNode = JsonNode.Parse(resString);
+                    var error = jsonNode?["errors"]?.ToString() ?? string.Empty;
+
+                    return new ResponseResult() { Success = false, Error = error };
+                }
+
+                return new ResponseResult() { Success = true };
+            }
+            catch (Exception ex)
+            {
+                return new ResponseResult() { Success = false, Error = ex.Message };
+            }
+        }
+
+        public async Task<ResponseResult> DeleteEvent(Guid eventId)
+        {
+            try
+            {
+                var response = await httpClient.DeleteAsync($"President/deletePendingEvent/{eventId}");
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -83,7 +106,7 @@ namespace Project.Frontend.President.Services
         {
             try
             {
-                var response = await httpClient.GetAsync($"president/getEventById?eventId={societyId}");
+                var response = await httpClient.GetAsync($"president/getEventById/{societyId}");
 
                 if (!response.IsSuccessStatusCode)
                     return null;
@@ -100,34 +123,13 @@ namespace Project.Frontend.President.Services
             }
         }
 
-        public async Task<ResponseResult> UpdateEvent(UpdateEventDto updateEventDto)
-        {
-            try
-            {
-                var response = await httpClient.PutAsJsonAsync("president/updateEvent", updateEventDto);
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    var resString = await response.Content.ReadAsStringAsync();
-                    var jsonNode = JsonNode.Parse(resString);
-                    var error = jsonNode?["errors"]?.ToString() ?? string.Empty;
-
-                    return new ResponseResult() { Success = false, Error = error };
-                }
-
-                return new ResponseResult() { Success = true };
-            }
-            catch (Exception ex)
-            {
-                return new ResponseResult() { Success = false, Error = ex.Message };
-            }
-        }
+        
 
         public async Task<List<Event>> History(string memberId)
         {
             try
             {
-                var respnse = await httpClient.GetAsync($"president/history?memberId={memberId}");
+                var respnse = await httpClient.GetAsync($"president/history/{memberId}");
 
                 if (!respnse.IsSuccessStatusCode)
                     return new List<Event>();
@@ -144,7 +146,7 @@ namespace Project.Frontend.President.Services
 
         public async Task<MemberProfileDto?> GetProfile(string memberId)
         {
-            var response = await httpClient.GetAsync($"president/viewProfile?memberId={memberId}");
+            var response = await httpClient.GetAsync($"president/viewProfile/{memberId}");
 
             if (!response.IsSuccessStatusCode)
             {
@@ -160,7 +162,7 @@ namespace Project.Frontend.President.Services
         {
             try
             {
-                var reponse = await httpClient.PutAsJsonAsync("president/updateProfile", updatedProfile);
+                var reponse = await httpClient.PutAsJsonAsync($"president/updateProfile/{updatedProfile.Id}", updatedProfile);
 
                 if (!reponse.IsSuccessStatusCode)
                 {
@@ -181,8 +183,7 @@ namespace Project.Frontend.President.Services
 
         public async Task<Guid?> GetSocietyIdAsync(string memberId)
         {
-            var response = await httpClient.GetAsync(
-                $"president/getSocietyId?memberId={memberId}");
+            var response = await httpClient.GetAsync($"president/getSocietyId/{memberId}");
 
             if (!response.IsSuccessStatusCode)
                 return null;
