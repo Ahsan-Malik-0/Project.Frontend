@@ -1,0 +1,392 @@
+﻿@page "/chairperson/edit-event"
+@layout ChairpersonLayout
+
+@attribute [Authorize(Roles = "chairperson")]
+
+<div class="container mt-4">
+
+    <div class="row g-4 mb-4">
+
+        <!-- Event Details -->
+        <div class="col-lg-6 col-md-12">
+            <div class="card shadow-sm h-100">
+                <div class="card-header fw-bold h4">
+                    Event Details:
+                </div>
+
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Event Name</label>
+                        <input class="form-control"
+                               type="text"
+                               @bind="event_name" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Event Date</label>
+                        <input class="form-control"
+                               type="date"
+                               @bind="event_date" />
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(eventError))
+                    {
+                        <div class="alert alert-danger p-2">
+                            @eventError
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Requirement -->
+        <div class="col-lg-6 col-md-12">
+            <div class="card shadow-sm h-100">
+                <div class="card-header fw-bold h4">
+                    Add Requirement:
+                </div>
+
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label">Type</label><br />
+
+                        <div class="form-check form-check-inline">
+                            <label class="form-check-label">
+                                <input class="form-check-input"
+                                       type="radio"
+                                       name="type"
+                                       value="financial"
+                                       checked
+                                       @onchange="OnStatusChanged" />
+                                Financial
+                            </label>
+                        </div>
+
+                        <div class="form-check form-check-inline">
+                            <label class="form-check-label">
+                                <input class="form-check-input"
+                                       type="radio"
+                                       name="type"
+                                       value="non-financial"
+                                       @onchange="OnStatusChanged" />
+                                Non-Financial
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Name</label>
+                            <input class="form-control" @bind="req_name" />
+                        </div>
+
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Qty</label>
+                            <input class="form-control" type="number" @bind="req_qty" />
+                        </div>
+
+                        <div class="col-md-3 mb-3">
+                            <label class="form-label">Price</label>
+                            <input disabled="@(req_type == "non-financial")"
+                                   class="form-control"
+                                   type="number"
+                                   @bind="req_price" />
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(reqError))
+                    {
+                        <div class="alert alert-danger p-2">
+                            @reqError
+                        </div>
+                    }
+
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-primary"
+                                @onclick="HandleAddOrUpdateRequirement">
+                            @(isEditRequirementMode ? "Update Requirement" : "Add Requirement")
+                        </button>
+
+                        <button class="btn btn-secondary"
+                                @onclick="ClearForm"
+                                disabled="@(!isEditRequirementMode)">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+
+
+    <!-- Table to show requirements -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header fw-bold h4">
+            Requirements List:
+        </div>
+
+        <div class="card-body p-0">
+            <table class="table table-striped mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Type</th>
+                        <th>Name</th>
+                        <th>Qty</th>
+                        <th>Price</th>
+                        <th style="width:150px">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var req in requirements)
+                    {
+                        <tr>
+                            <td>@req.Type</td>
+                            <td>@req.Name</td>
+                            <td>@req.Quantity</td>
+                            <td>@req.Price</td>
+                            <td>
+                                <button class="btn btn-sm btn-warning me-1"
+                                        @onclick="() => HandleEditRequirement(req)">
+                                    Edit
+                                </button>
+
+                                <button class="btn btn-sm btn-danger"
+                                        disabled="@isEditRequirementMode"
+                                        @onclick="() => HandleDeleteRequirement(req)">
+                                    Delete
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+
+    <div class="row my-3 justify-content-end">
+
+
+        <div class="col-6 col-md-auto mb-2 mb-md-0">
+            <button class="btn btn-secondary w-100 fw-bold py-2"
+                    @onclick="HandleCancel">
+                Cancel Update
+            </button>
+        </div>
+        
+
+        <div class="col-auto col-md-auto">
+            <button class="btn btn-success w-100 fw-bold py-2"
+                    @onclick="HandleSubmit">
+                Update Event
+            </button>
+        </div>
+
+    </div>
+
+</div> <!-- container -->
+
+@inject ChairpersonServices chairpersonServices
+@inject IJSRuntime JS
+@inject NavigationManager nav
+@code {
+    [SupplyParameterFromQuery (Name = "id")]
+    public Guid? EventId { get; set; }
+
+    private string event_name = "";
+    private DateTime event_date = DateTime.Now; // Fixed: Use FromDateTime static method
+    private string req_type = "financial";
+    private string req_name = "";
+    private int req_qty;
+    private decimal req_price;
+    private string? eventError;
+    private string? reqError;
+
+    private bool isEditRequirementMode = false;
+    private EventRequirementDto? selectedRequirement;
+
+    List<EventRequirementDto> requirements = new();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // if (EventId != null)
+        // {
+        var @event = await chairpersonServices.GetEventById(EventId!.Value);
+
+        if (@event == null)
+        {
+            await JS.InvokeVoidAsync("alert", "No event found");
+            return;
+        }
+
+        event_name = @event.Name;
+        event_date = @event.Date;
+
+        foreach (var requirement in @event.Requirements)
+        {
+            requirements.Add(
+                new EventRequirementDto()
+                {
+                    Type = requirement.Type,
+                    Name = requirement.Name,
+                    Quantity = requirement.Quantity,
+                    Price = requirement.Price
+                }
+            );
+        }
+    }
+
+
+    private void OnStatusChanged(ChangeEventArgs e)
+    {
+        req_type = e.Value?.ToString() ?? "financial";
+
+        if (req_type == "non-financial")
+        {
+            req_price = 0;
+        }
+    }
+
+    private void HandleAddOrUpdateRequirement()
+    {
+        reqError = null;
+
+        if (string.IsNullOrWhiteSpace(req_name) || string.IsNullOrWhiteSpace(req_type) || req_qty < 0)
+        {
+            reqError = "Requirement type, name and quantity are required.";
+            return;
+        }
+
+        if (req_type == "financial" && req_price == 0)
+        {
+            reqError = "Price can't be zero for finential Requirement";
+            return;
+        }
+
+        decimal finalPrice = req_type == "non-financial" ? 0 : req_price;
+
+        if (isEditRequirementMode && selectedRequirement != null)
+        {
+            selectedRequirement.Type = req_type;
+            selectedRequirement.Name = req_name;
+            selectedRequirement.Quantity = req_qty;
+            selectedRequirement.Price = req_price;
+        }
+        else
+        {
+            requirements.Add(new EventRequirementDto
+            {
+                Type = req_type,
+                Name = req_name,
+                Quantity = req_qty,
+                Price = req_price
+            });
+        }
+
+        ClearForm();
+    }
+
+    private void HandleEditRequirement(EventRequirementDto req)
+    {
+        selectedRequirement = req;
+        req_type = req.Type;
+        req_name = req.Name;
+        req_qty = req.Quantity;
+        req_price = req.Price;
+        isEditRequirementMode = true;
+    }
+
+
+
+    private async Task HandleDeleteRequirement(EventRequirementDto req)
+    {
+        bool confirmDelete = await JS.InvokeAsync<bool>("confirm", $"Delete {req.Name}?");
+
+        if (confirmDelete)
+        {
+            requirements.Remove(req);
+            ClearForm();
+        }
+    }
+
+    private async Task HandleCancel()
+    {
+        bool confirmDelete = await JS.InvokeAsync<bool>("confirm", $"Are you sure you want to cancel editing?");
+
+        if (confirmDelete)
+        {
+            nav.NavigateTo("chairperson/events-requests");
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        eventError = null;
+        reqError = null;
+
+        if (string.IsNullOrWhiteSpace(event_name))
+        {
+            eventError = "Event name is required.";
+            return;
+        }
+
+        if (requirements.Count == 0)
+        {
+            eventError = "At least one requirement is required.";
+            return;
+        }
+
+        if (event_date < DateTime.Now)
+        {
+            eventError = "Invalid Date";
+            return;
+        }
+        if (isEditRequirementMode)
+        {
+            reqError = "Update Requirement First";
+            return;
+        }
+
+        var dto = new UpdateEventDto()
+        {
+            Id = EventId!.Value,
+            Name = event_name,
+            Date = event_date,
+            Requirements = requirements
+        };
+
+        var response = await chairpersonServices.UpdateEvent(dto);
+
+        if (response.Success)
+        {
+            var alertResposse = await JS.InvokeAsync<bool>("confirm", "Event Updated Successfully, do you want to create Requisition");
+
+            if(alertResposse)
+            {
+                nav.NavigateTo($"chairperson/create-requisition?id={dto.Id}");
+            }
+            else
+            {
+                nav.NavigateTo("chairperson/events-requests");
+            }
+        }
+        else
+        {
+            eventError = response.Error;
+        }
+    }
+
+
+
+    private void ClearForm()
+    {
+        // req_type = "financial";
+        req_name = "";
+        req_qty = 0;
+        req_price = 0;
+        isEditRequirementMode = false;
+        selectedRequirement = null;
+    }
+}

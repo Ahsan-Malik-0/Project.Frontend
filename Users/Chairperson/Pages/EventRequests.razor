@@ -1,0 +1,327 @@
+﻿@page "/chairperson/events-requests"
+@layout ChairpersonLayout
+
+@attribute [Authorize(Roles = "chairperson")]
+
+
+<h2 class="my-3 fw-bold">Requests:</h2>
+
+@if (loading)
+{
+    <p class="text-center text-muted">Loading events</p>
+}
+else if (events.Count == 0)
+{
+    <p class="text-center text-muted">No pending events available</p>
+}
+else
+{
+    <div class="row g-4">
+        @foreach (var _event in events)
+        {
+            var modalId = $"eventDetailsModal-{_event.Id}";
+
+            <div class="col-lg-4 col-md-6">
+                <div class="card h-100 shadow-sm border">
+
+                    <!-- Title + Status -->
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6 class="fw-bold mb-0">@_event.Name</h6>
+                        @* 
+                            <span
+                                class="badge @(_event.Status == "Approved" ? "bg-success" : _event.Status == "Pending" ? "bg-warning text-dark" : "bg-danger")">
+                                @_event.Status
+                            </span> *@
+                    </div>
+
+                    <div class="card-body d-flex flex-column">
+                        <p class="text-muted small mb-2">
+                            <strong>Date:</strong> @_event.Date.ToString("dd MMM yyyy")
+                        </p>
+                        <p class="text-muted small mb-3">
+                            @* <strong>Status:</strong> @_event.Status *@
+                            <strong>Budget:</strong> @(_event.Requirements?.Sum(r => r.Price * r.Quantity) ?? 0)
+                        </p>
+
+                        <!-- View Details Button -->
+                        <div class="mt-auto d-flex gap-2">
+                            <button class="btn btn-sm btn-outline-danger w-100"
+                                    @onclick="() => DeleteEvent(_event)">
+                                Delete
+                            </button>
+
+                            <button class="btn btn-sm btn-primary w-100"
+                                    @onclick="() => OpenOffcanvas(_event)"
+                                    data-bs-toggle="offcanvas"
+                                    data-bs-target="#eventDetailsCanvas">
+                                View Details
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Event Details Offcanvas -->
+        <div class="offcanvas offcanvas-end m-0" tabindex="-1" id="eventDetailsCanvas" style="width:600px;">
+            <div class="offcanvas-header border-bottom">
+                <h5 class="offcanvas-title fw-bold">
+                    @selectedEvent?.Name
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
+            </div>
+
+            <div class="offcanvas-body">
+
+                @if (selectedEvent != null)
+                {
+                    <div class="mb-3">
+                        <p><strong>Date:</strong> @selectedEvent.Date.ToString("dd MMM yyyy")</p>
+                        <p>
+                            <strong>Total Budget:</strong>
+                            @(selectedEvent.Requirements?.Sum(r => r.Price * r.Quantity) ?? 0)
+                        </p>
+                    </div>
+
+                    <h5 class="fw-bold border-bottom pb-2">Requirements</h5>
+
+                    @if (selectedEvent.Requirements?.Any() == true)
+                    {
+                        <table class="table table-hover table-bordered align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Name</th>
+                                    <th class="text-center">Qty</th>
+                                    <th class="text-end">Price</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var req in selectedEvent.Requirements)
+                                {
+                                    <tr>
+                                        <td>@req.Type</td>
+                                        <td>@req.Name</td>
+                                        <td class="text-center">@req.Quantity</td>
+                                        <td class="text-end">@req.Price</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                    else
+                    {
+                        <p class="text-muted text-center">No requirements available</p>
+                    }
+
+                    <p class="text-end fw-bold">
+                        Total:
+                        @(selectedEvent.Requirements?.Sum(r => r.Price * r.Quantity) ?? 0)
+                    </p>
+
+                    <hr />
+
+                    <!-- Action Buttons -->
+                    <div class="d-flex justify-content-between mt-4">
+
+                        <div>
+                            <button class="btn btn-outline-danger me-2"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#rejectModal">
+                                Reject
+                            </button>
+                            <button class="btn btn-outline-warning"
+                                    data-bs-dismiss="offcanvas"
+                                    @onclick="() => PostponeEvent(selectedEvent)">
+                                Postpone
+                            </button>
+                        </div>
+
+                        <div>
+                            <button class="btn btn-outline-primary me-2"
+                                    data-bs-dismiss="offcanvas"
+                                    @onclick="() => EditEvent(selectedEvent.Id)">
+                                Edit Event
+                            </button>
+
+                            <button class="btn btn-outline-success"
+                                    data-bs-dismiss="offcanvas"
+                                    @onclick="() => CreateRequisition(selectedEvent.Id)">
+                                Create Requisition
+                            </button>
+                        </div>
+
+                    </div>
+                }
+
+            </div>
+        </div>
+
+            <!--Rejection Model-->
+        <div class="modal fade" id="rejectModal" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+
+                    <div class="modal-header">
+                        <h5 class="modal-title fw-bold">Reject Event</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+
+                    <div class="modal-body">
+
+                        <label class="form-label fw-semibold">
+                            Message
+                        </label>
+
+                        <textarea class="form-control"
+                                  rows="4"
+                                  placeholder="Write rejection reason..."
+                                  @bind="rejectMessage"></textarea>
+
+                    </div>
+
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary"
+                                data-bs-dismiss="modal">
+                            Cancel
+                        </button>
+
+                        <button class="btn btn-danger"
+                                data-bs-dismiss="modal"
+                                @onclick="() => SendRejection(selectedEvent!)">
+                            Send
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        
+    </div>
+}
+
+
+
+@inject ClaimServices claimServices
+@inject ChairpersonServices chairpersonServices
+@inject IJSRuntime JS
+@inject NavigationManager nav
+@code {
+
+    private string id = "";
+    private bool loading = false;
+    List<Event> events = new();
+    Event? selectedEvent;
+    string rejectMessage = "";
+
+    void OpenOffcanvas(Event ev)
+    {
+        selectedEvent = ev;
+    }
+
+    private async Task SendRejection(Event rejectedEvent)
+    {
+        if (selectedEvent == null)
+            return;
+
+        if (string.IsNullOrWhiteSpace(rejectMessage))
+        {
+            await JS.InvokeVoidAsync("alert", "Please enter rejection message");
+            return;
+        }
+        else
+        {
+            UpdateEventStatusDto updateEventStatus = new UpdateEventStatusDto()
+            {
+                Id = rejectedEvent.Id,
+                Status = "rejected",
+                Message = rejectMessage
+            };
+
+            var response = await chairpersonServices.RejectEvent(updateEventStatus);
+
+            if(response.Success)
+                await JS.InvokeVoidAsync("alert", "Event rejected successfully");
+            else
+                await JS.InvokeVoidAsync("alert", $"An error accure while rejecting the event: {response.Error}"); 
+
+            rejectMessage = "";
+            await OnInitializedAsync();
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        loading = true;
+        var claims = await claimServices.GetClaims();
+        id = claims.Id;
+
+        try
+        {
+            events = (await chairpersonServices.GetPendingEvents(id))
+            .OrderByDescending(e => e.Date.Date)
+            .ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error:", ex);
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+
+    private void EditEvent(Guid id)
+    {
+        nav.NavigateTo($"chairperson/edit-event?id={id}");
+    }
+
+    private async Task PostponeEvent(Event @event)
+    {
+        var conformation = await JS.InvokeAsync<bool>("confirm", $"Are you sure you want to Postpone {@event.Name}");
+        if (conformation)
+        {
+            var response = await chairpersonServices.PostponeEvent(@event.Id);
+
+            if (!response.Success)
+            {
+                await JS.InvokeVoidAsync("alert", $"Event not pontpone due to {response.Error}");
+            }
+            else
+            {
+                await JS.InvokeVoidAsync("alert", $"{@event.Name} has been postponed Successfully");
+                await OnInitializedAsync();
+            }
+        }
+    }
+
+    private void CreateRequisition(Guid id)
+    {
+        nav.NavigateTo($"chairperson/create-requisition?id={id}");
+    }
+
+
+    private async Task DeleteEvent(Event @event)
+    {
+
+        bool confirmDelete = await JS.InvokeAsync<bool>("confirm", $"Are you sure you want to delete {@event.Name}");
+
+        if (confirmDelete)
+        {
+            var response = await chairpersonServices.DeleteEvent(@event.Id);
+
+            if (!response.Success)
+            {
+                await JS.InvokeVoidAsync("alert", $"Event not delete due to {response.Error}");
+            }
+            else
+            {
+                await JS.InvokeVoidAsync("alert", $"{@event.Name} has been deleted Successfully");
+                await OnInitializedAsync();
+            }
+        }
+    }
+}

@@ -1,0 +1,58 @@
+﻿<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">Chairperson</a>
+        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+    </div>
+</div>
+
+<div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
+    <nav class="flex-column">
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="chairperson" Match="NavLinkMatch.All">
+                <span class="bi bi-house-door-fill mb-1 h5 ps-2" aria-hidden="true"></span>
+                <span class="ps-3">Home</span>
+            </NavLink>
+        </div>
+        <hr class="m-0" />
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="/chairperson/events-requests">
+                <span class="bi bi-plus-square-fill mb-1 h5 ps-2" aria-hidden="true"></span>
+                <span class="ps-3">Events Requests</span>
+            </NavLink>
+        </div>
+        <hr class="m-0" />
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="/chairperson/yearly-budget">
+                <span class="bi bi-wallet2 mb-1 h5 ps-2" aria-hidden="true"></span> 
+                <span class="ps-3">Yearly Budget</span>
+            </NavLink>
+        </div>
+        <hr class="m-0" />
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="/chairperson/profile">
+                <span class="bi bi-person-square mb-1 h5 ps-2" aria-hidden="true"></span> 
+                <span class="ps-3">Profile</span>
+            </NavLink>
+        </div>
+        <hr class="m-0" />
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="/chairperson/president-profile">
+                <span class="bi bi-person-square mb-1 h5 ps-2" aria-hidden="true"></span> 
+                <span class="ps-3">President Info</span>
+            </NavLink>
+        </div>
+    </nav>
+</div>
+
+@code {
+    private bool collapseNavMenu = true;
+
+    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+}

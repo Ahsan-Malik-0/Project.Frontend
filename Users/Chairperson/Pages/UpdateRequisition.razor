@@ -1,0 +1,524 @@
+@page "/chairperson/update-requisition"
+@layout ChairpersonLayout
+@using Microsoft.AspNetCore.Components
+@attribute [Authorize(Roles = "chairperson")]
+
+<div class="container py-5">
+
+    <!-- ================= FORM SECTION ================= -->
+    <div class="row justify-content-center">
+        <div class="col-lg-12 col-md-12 col-sm-12">
+
+            <div class="row g-4 mb-4">
+
+                <!-- Left: Subject + Body -->
+                <div class="col-lg-6 col-md-12">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header fw-bold h5 mb-0">
+                            Requisition Details
+                        </div>
+                        <div class="card-body">
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Subject</label>
+                                <input class="form-control"
+                                       type="text"
+                                       @bind="updateModel.Subject"
+                                       @bind:event="oninput"
+                                       placeholder="Enter requisition subject" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Application Body</label>
+                                <textarea class="form-control"
+                                          rows="5"
+                                          @bind="updateModel.Body"
+                                          @bind:event="oninput"
+                                          placeholder="Write application content here..."></textarea>
+                            </div>
+
+                            @if (!string.IsNullOrEmpty(formError))
+                            {
+                                <div class="alert alert-danger p-2 small">@formError</div>
+                            }
+
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Add Requirement -->
+                <div class="col-lg-6 col-md-12">
+                    <div class="card shadow-sm h-100">
+                        <div class="card-header fw-bold h5 mb-0">
+                            @(isReqEditMode ? "Edit Requirement" : "Add Requirement")
+                        </div>
+                        <div class="card-body">
+
+                            <!-- Type Radio -->
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Type</label><br />
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio"
+                                           name="reqType" value="financial"
+                                           checked="@(req_type == "financial")"
+                                           @onchange="OnTypeChanged" />
+                                    <label class="form-check-label">Financial</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio"
+                                           name="reqType" value="non-financial"
+                                           checked="@(req_type == "non-financial")"
+                                           @onchange="OnTypeChanged" />
+                                    <label class="form-check-label">Non-Financial</label>
+                                </div>
+                            </div>
+
+                            <!-- Name, Qty, Price -->
+                            <div class="row g-2 mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Name</label>
+                                    <input class="form-control" @bind="req_name" placeholder="Requirement name" />
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label fw-semibold">Qty</label>
+                                    <input type="number" class="form-control" @bind="req_qty" min="1" />
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label fw-semibold">Price</label>
+                                    <input type="number" class="form-control"
+                                           @bind="req_price" min="0"
+                                           disabled="@(req_type == "non-financial")" />
+                                </div>
+                            </div>
+
+                            @if (!string.IsNullOrEmpty(reqError))
+                            {
+                                <div class="alert alert-danger p-2 small mb-3">@reqError</div>
+                            }
+
+                            <!-- Add / Update + Cancel -->
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-primary"
+                                        @onclick="HandleAddOrUpdateRequirement">
+                                    @(isReqEditMode ? "Update Requirement" : "Add Requirement")
+                                </button>
+                                <button class="btn btn-secondary"
+                                        disabled="@(!isReqEditMode)"
+                                        @onclick="ClearReqForm">
+                                    Cancel
+                                </button>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Requirements Table -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header fw-bold h5 mb-0">Requirements List</div>
+                <div class="card-body p-0">
+                    @if (!updateModel.EventRequirements.Any())
+                    {
+                        <p class="text-center text-muted py-4 mb-0 small">
+                            No requirements added yet.
+                        </p>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-striped table-bordered align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="small">Type</th>
+                                        <th class="small">Name</th>
+                                        <th class="small text-center">Qty</th>
+                                        <th class="small text-end">Price</th>
+                                        <th class="small text-end">Total</th>
+                                        <th class="small text-center" style="width:120px">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var req in updateModel.EventRequirements)
+                                    {
+                                        <tr>
+                                            <td>@req.Type</td>
+                                            <td>@req.Name</td>
+                                            <td class="text-center">@req.Quantity</td>
+                                            <td class="text-end">@req.Price.ToString("N2")</td>
+                                            <td class="text-end fw-semibold">@((req.Quantity * req.Price).ToString("N2"))</td>
+                                            <td class="text-center d-flex justify-content-center gap-1">
+                                                <button class="btn btn-sm btn-warning me-1"
+                                                        disabled="@isReqEditMode"
+                                                        @onclick="() => HandleEdit(req)">
+                                                    Edit
+                                                </button>
+                                                <button class="btn btn-sm btn-danger"
+                                                        disabled="@isReqEditMode"
+                                                        @onclick="() => HandleDelete(req)">
+                                                    Delete
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                                <tfoot class="table-light">
+                                    <tr>
+                                        <td colspan="4" class="text-end fw-bold">Total:</td>
+                                        <td class="text-end fw-bold text-primary">
+                                            @TotalRequestedAmount.ToString("N2")
+                                        </td>
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Submit + Cancel -->
+            <div class="d-flex justify-content-end gap-3">
+                <button class="btn btn-outline-secondary px-4" @onclick="HandleCancel">
+                    Cancel
+                </button>
+                <button class="btn btn-success px-4" @onclick="HandleSubmit">
+                    Update Requisition
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ================= APPLICATION PREVIEW ================= -->
+    <div class="row justify-content-center mt-5">
+        <div class="col-lg-10">
+            <div class="card shadow-lg border rounded-4">
+                <div class="card-body p-5">
+
+                    <!-- Header -->
+                    <div class="d-flex align-items-center gap-4 border-bottom pb-3 mb-4">
+                        <img src="/images/biit_logo.png" alt="BIIT Logo" style="max-width:80px;" />
+                        <div>
+                            <h4 class="fw-bold mb-0">Barani Institute Of Information Technology</h4>
+                            <small class="text-muted">Official Event Requisition Application</small>
+                        </div>
+                    </div>
+
+                    <!-- Subject + Dates -->
+                    <div class="mb-4">
+                        <p class="mb-1">
+                            <strong>Subject:</strong>
+                            @(string.IsNullOrWhiteSpace(updateModel.Subject)
+                                ? "__________________________"
+                                : updateModel.Subject)
+                        </p>
+                        <p class="mb-1">
+                            <strong>Requested Date:</strong>
+                            @updateModel.RequestedDate.ToString("dd MMM yyyy")
+                        </p>
+                        <p class="mb-0">
+                            <strong>Event Date:</strong>
+                            @eventDate.ToString("dd MMM yyyy")
+                        </p>
+                    </div>
+
+                    <!-- Body -->
+                    <div class="mb-4">
+                        <p>Respected Sir,</p>
+                        <p style="white-space: pre-line;">
+                            @(string.IsNullOrWhiteSpace(updateModel.Body)
+                                ? "(Application body will appear here...)"
+                                : updateModel.Body)
+                        </p>
+                    </div>
+
+                    <!-- Requirements Table -->
+                    @if (updateModel.EventRequirements.Any())
+                    {
+                        <strong>@societyName Society need the following:</strong>
+                        <div class="table-responsive mb-4 mt-2">
+                            <table class="table table-bordered align-middle">
+                                <thead class="table-light text-center">
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Name</th>
+                                        <th>Qty</th>
+                                        <th>Unit Price</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var req in updateModel.EventRequirements)
+                                    {
+                                        <tr>
+                                            <td>@req.Type</td>
+                                            <td>@req.Name</td>
+                                            <td class="text-center">@req.Quantity</td>
+                                            <td class="text-end">@req.Price.ToString("N2")</td>
+                                            <td class="text-end fw-semibold">@((req.Quantity * req.Price).ToString("N2"))</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                                <tfoot class="table-light">
+                                    <tr>
+                                        <td colspan="4" class="text-end fw-bold">Total Requested Amount:</td>
+                                        <td class="text-end fw-bold text-primary">
+                                            @TotalRequestedAmount.ToString("N2")
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-center text-muted">No requirements added for this event.</p>
+                    }
+
+                    <!-- Signature -->
+                    <div class="mt-5 pt-4 border-top">
+                        <p class="mb-1 fw-semibold">@chairpersonName</p>
+                        <p class="mb-4 text-muted">@chairpersonRole (@societyName)</p>
+                        <p class="mb-1 fw-semibold">Mr. Shahid Rashid</p>
+                        <p class="text-muted">Assistant Director Student Affairs</p>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+@inject ChairpersonServices chairpersonServices
+@inject ClaimServices claimServices
+@inject NavigationManager nav
+@inject IJSRuntime JS
+
+@code {
+    [SupplyParameterFromQuery(Name = "id")]
+    public Guid? RequisitionId { get; set; }
+
+    // ── Chairperson info ─────────────────────────────────────
+    private string chairpersonName = "";
+    private string chairpersonRole = "";
+    private string societyName = "";
+    private DateTime eventDate;
+
+    // ── Main model ───────────────────────────────────────────
+    private UpdateEventRequisitionDto updateModel = new()
+    {
+        Subject = string.Empty,
+        Body = string.Empty,
+        RequestedAmount = 0,
+        RequestedDate = DateTime.Now,
+        EventRequirements = new List<EventRequirementDto>()
+    };
+
+    private decimal TotalRequestedAmount =>
+        updateModel.EventRequirements.Sum(r => r.Quantity * r.Price);
+
+    // ── Requirement fields ───────────────────────────────────
+    private string req_type = "financial";
+    private string req_name = "";
+    private int req_qty = 1;
+    private decimal req_price = 0;
+    private string? reqError;
+    private string? formError;
+    private bool isReqEditMode = false;
+    private EventRequirementDto? selectedRequirement;
+
+    // ── Load existing data ───────────────────────────────────
+    protected override async Task OnParametersSetAsync()
+    {
+        if (RequisitionId == null)
+        {
+            nav.NavigateTo("/chairperson/dashboard");
+            return;
+        }
+
+        try
+        {
+            var claims = await claimServices.GetClaims();
+            chairpersonRole = claims.Role;
+
+            var chairperson = await chairpersonServices.GetChairpersonDetailsForRequisition(Guid.Parse(claims.Id));
+            if (chairperson != null)
+            {
+                chairpersonName = chairperson.ChaipersonName ?? "";
+                societyName = chairperson.SocietyName ?? "";
+            }
+
+            var requisition = await chairpersonServices.GetRequisitionDetails(RequisitionId.Value);
+            if (requisition == null)
+            {
+                await JS.InvokeVoidAsync("alert", "Requisition not found.");
+                nav.NavigateTo("/chairperson/dashboard");
+                return;
+            }
+
+            eventDate = requisition.EventDate;
+            updateModel.Subject = requisition.Subject;
+            updateModel.Body = requisition.Body;
+            updateModel.RequestedDate = requisition.RequestedDate;
+
+            updateModel.EventRequirements.Clear();
+            foreach (var req in requisition.EventRequirements)
+            {
+                updateModel.EventRequirements.Add(new EventRequirementDto
+                {
+                    Type = req.Type,
+                    Name = req.Name,
+                    Quantity = req.Quantity,
+                    Price = req.Price
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading requisition: {ex.Message}");
+            await JS.InvokeVoidAsync("alert", "Failed to load requisition details.");
+            nav.NavigateTo("/chairperson/dashboard");
+        }
+    }
+
+    // ── Type Radio ───────────────────────────────────────────
+    private void OnTypeChanged(ChangeEventArgs e)
+    {
+        req_type = e.Value?.ToString() ?? "financial";
+        if (req_type == "non-financial") req_price = 0;
+    }
+
+    // ── Requirement Actions ──────────────────────────────────
+    private void HandleAddOrUpdateRequirement()
+    {
+        reqError = null;
+
+        if (string.IsNullOrWhiteSpace(req_name) || req_qty <= 0)
+        {
+            reqError = "Name and quantity are required.";
+            return;
+        }
+
+        if (req_type == "financial" && req_price == 0)
+        {
+            reqError = "Price can't be zero for a financial requirement.";
+            return;
+        }
+
+        decimal finalPrice = req_type == "non-financial" ? 0 : req_price;
+
+        if (isReqEditMode && selectedRequirement != null)
+        {
+            selectedRequirement.Type = req_type;
+            selectedRequirement.Name = req_name;
+            selectedRequirement.Quantity = req_qty;
+            selectedRequirement.Price = finalPrice;
+        }
+        else
+        {
+            updateModel.EventRequirements.Add(new EventRequirementDto
+            {
+                Type = req_type,
+                Name = req_name,
+                Quantity = req_qty,
+                Price = finalPrice
+            });
+        }
+
+        ClearReqForm();
+    }
+
+    private void HandleEdit(EventRequirementDto req)
+    {
+        selectedRequirement = req;
+        req_type = req.Type;
+        req_name = req.Name;
+        req_qty = req.Quantity;
+        req_price = req.Price;
+        isReqEditMode = true;
+        reqError = null;
+    }
+
+    private async Task HandleDelete(EventRequirementDto req)
+    {
+        bool confirm = await JS.InvokeAsync<bool>("confirm", $"Delete \"{req.Name}\"?");
+        if (confirm)
+        {
+            updateModel.EventRequirements.Remove(req);
+            ClearReqForm();
+        }
+    }
+
+    private void ClearReqForm()
+    {
+        req_name = "";
+        req_qty = 1;
+        req_price = 0;
+        isReqEditMode = false;
+        selectedRequirement = null;
+        reqError = null;
+    }
+
+    // ── Submit ───────────────────────────────────────────────
+    private async Task HandleSubmit()
+    {
+        formError = null;
+
+        if (string.IsNullOrWhiteSpace(updateModel.Subject))
+        {
+            formError = "Subject is required.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(updateModel.Body))
+        {
+            formError = "Application body is required.";
+            return;
+        }
+
+        if (!updateModel.EventRequirements.Any())
+        {
+            formError = "At least one requirement is required.";
+            return;
+        }
+
+        if (isReqEditMode)
+        {
+            formError = "Please finish editing the requirement first.";
+            return;
+        }
+
+        updateModel.RequestedAmount = TotalRequestedAmount;
+
+        try
+        {
+            var response = await chairpersonServices.UpdateRequisition(RequisitionId!.Value, updateModel);
+
+            if (response.Success)
+            {
+                await JS.InvokeVoidAsync("alert", "Requisition updated successfully!");
+                nav.NavigateTo("/chairperson");
+            }
+            else
+            {
+                formError = response.Error ?? "Failed to update requisition.";
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+            formError = "An error occurred. Please try again.";
+        }
+    }
+
+    private async Task HandleCancel()
+    {
+        var confirm = await JS.InvokeAsync<bool>("confirm", "Are you sure you want to cancel?");
+        if (confirm)
+            nav.NavigateTo("/chairperson/events-requests");
+    }
+}

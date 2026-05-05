@@ -1,0 +1,580 @@
+@page "/chairperson/yearly-budget/create"
+
+@layout ChairpersonLayout
+
+@attribute [Authorize(Roles = "chairperson")]
+
+<div class="container-fluid py-4 px-4">
+
+    <h4 class="fw-bold mb-4">Add Yearly Budget</h4>
+
+    <div class="row g-4">
+
+        <!-- ===== LEFT: Budget Info ===== -->
+        <div class="col-12 col-lg-6">
+            <div class="card border shadow-sm h-100">
+                <div class="card-header bg-white border-bottom fw-semibold py-3">
+                    Budget Details
+                </div>
+                <div class="card-body">
+                    <EditForm Model="newBudget">
+                        <DataAnnotationsValidator />
+
+                        <!-- Session -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">Session</label>
+                            <input class="form-control" value="@newBudget.Session" disabled />
+                            <div class="form-text text-muted">Auto-filled based on current year.</div>
+                        </div>
+
+                        <!-- Requested Amount -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">Requested Amount <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text">Rs</span>
+                                <InputNumber class="form-control"
+                                             @bind-Value="newBudget.RequestedAmount"
+                                             placeholder="0.00" />
+                            </div>
+                            <ValidationMessage For="@(() => newBudget.RequestedAmount)" class="text-danger small" />
+                        </div>
+
+                        <!-- Requested Date -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold small">Requested Date </label>
+                            <input class="form-control" value="@(newBudget.RequestedDate.ToString("dd MMM yyyy"))" disabled />
+                            <div class="form-text text-muted">Auto-filled based on current date.</div>
+                        </div>
+
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== RIGHT: Event + Requirements ===== -->
+        <div class="col-12 col-lg-6">
+            <div class="card border shadow-sm h-100">
+                <div class="card-header bg-white border-bottom fw-semibold py-3">
+                    @(eventEditIndex.HasValue ? "Edit Event" : "Add Event")
+                </div>
+                <div class="card-body">
+
+                    <!-- Event Fields -->
+                    <div class="row g-2 mb-3">
+                        <div class="col-12">
+                            <label class="form-label fw-semibold small">Event Name <span class="text-danger">*</span></label>
+                            <input class="form-control @(eventNameError ? "is-invalid" : "")"
+                                   @bind="eventForm.Name"
+                                   @bind:event="oninput"
+                                   placeholder="e.g. Annual Dinner" />
+                            @if (eventNameError)
+                            {
+                                <div class="invalid-feedback">Event name is required.</div>
+                            }
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-semibold small">Estimate Month <span class="text-danger">*</span></label>
+                            <select class="form-select @(eventMonthError ? "is-invalid" : "")"
+                                    @bind="eventForm.EstimateMonth">
+                                <option value="">— Select Month —</option>
+                                @foreach (var m in months)
+                                {
+                                    <option value="@m">@m</option>
+                                }
+                            </select>
+                            @if (eventMonthError)
+                            {
+                                <div class="invalid-feedback">Estimate month is required.</div>
+                            }
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-semibold small">Estimate Amount</label>
+                            <div class="input-group">
+                                <span class="input-group-text">Rs</span>
+                                <input type="number" class="form-control" min="0"
+                                    value="@(eventRequirements.Count > 0
+                                        ? eventRequirements.Sum(r => r.EstimatePrice ?? 0)
+                                        : eventForm.EstimateAmount)"
+                                    @oninput="e => { if (eventRequirements.Count == 0) eventForm.EstimateAmount = string.IsNullOrEmpty(e.Value?.ToString()) ? null : decimal.Parse(e.Value.ToString()!); }"
+                                    disabled="@(eventRequirements.Count > 0)"
+                                    placeholder="Optional" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-3" />
+
+                    <!-- Requirement Fields -->
+                    <p class="fw-semibold small mb-2 text-muted text-uppercase" style="letter-spacing:0.05em;">
+                        Event Requirements (optional)
+                    </p>
+                    <div class="row g-2 mb-2">
+                        <div class="col-7">
+                            <input class="form-control form-control-sm @(reqNameError ? "is-invalid" : "")"
+                                   @bind="reqForm.Name"
+                                   @bind:event="oninput"
+                                   placeholder="Requirement name" />
+                            @if (reqNameError)
+                            {
+                                <div class="invalid-feedback">Requirement name is required.</div>
+                            }
+                        </div>
+                        <div class="col-5">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text">Rs</span>
+                                <input type="number" class="form-control" min="0"
+                                       @bind="reqForm.EstimatePrice"
+                                       placeholder="Price" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Add / Update Requirement Button -->
+                    <div class="mb-3">
+                        @if (reqEditIndex.HasValue)
+                        {
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-warning btn-sm" @onclick="UpdateRequirement">
+                                    <i class="bi bi-pencil-fill me-1"></i> Update Requirement
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm" @onclick="CancelReqEdit">
+                                    Cancel
+                                </button>
+                            </div>
+                        }
+                        else
+                        {
+                            <button class="btn btn-outline-primary btn-sm" @onclick="AddRequirement">
+                                <i class="bi bi-plus-circle me-1"></i> Add Requirement
+                            </button>
+                        }
+                    </div>
+
+                    <!-- Requirements Mini Table -->
+                    @if (eventRequirements.Count > 0)
+                    {
+                        <div class="table-responsive mb-3">
+                            <table class="table table-sm table-bordered align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="small">#</th>
+                                        <th class="small">Requirement</th>
+                                        <th class="small">Price</th>
+                                        <th class="small text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (int i = 0; i < eventRequirements.Count; i++)
+                                    {
+                                        int idx = i;
+                                        var req = eventRequirements[idx];
+                                        <tr>
+                                            <td class="text-muted">@(idx + 1)</td>
+                                            <td>@req.Name</td>
+                                            <td>@(req.EstimatePrice.HasValue ? "Rs " + req.EstimatePrice.Value.ToString("N0") : "—")</td>
+                                            <td class="text-center">
+                                                <button class="btn btn-outline-warning btn-sm py-0 px-2 me-1"
+                                                        title="Edit"
+                                                        @onclick="() => EditRequirement(idx)">
+                                                    <i class="bi bi-pencil"></i>
+                                                </button>
+                                                <button class="btn btn-outline-danger btn-sm py-0 px-2"
+                                                        title="Remove"
+                                                        @onclick="() => RemoveRequirement(idx)">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+
+                    <!-- Add / Update Event Buttons -->
+                    <div class="d-flex gap-2">
+                        @if (eventEditIndex.HasValue)
+                        {
+                            <button class="btn btn-warning btn-sm px-3" @onclick="UpdateEvent">
+                                <i class="bi bi-check-lg me-1"></i> Update Event
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm" @onclick="CancelEventEdit">
+                                Cancel
+                            </button>
+                        }
+                        else
+                        {
+                            <button class="btn btn-primary btn-sm px-3" @onclick="AddEvent">
+                                <i class="bi bi-plus-lg me-1"></i> Add Event
+                            </button>
+                        }
+                    </div>
+
+                    <!-- Validation: at least one event -->
+                    @if (noEventsError)
+                    {
+                        <div class="alert alert-danger py-2 mt-3 small mb-0">
+                            <i class="bi bi-exclamation-circle me-1"></i>
+                            At least one event is required.
+                        </div>
+                    }
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== BOTTOM: Events Summary Table ===== -->
+        <div class="col-12">
+            <div class="card border shadow-sm">
+                <div class="card-header bg-white border-bottom d-flex align-items-center justify-content-between py-3">
+                    <span class="fw-semibold">
+                        Events Summary
+                        <span class="badge bg-primary bg-opacity-10 text-primary ms-2">
+                            @addedEvents.Count event(s)
+                        </span>
+                    </span>
+                </div>
+                <div class="card-body p-0">
+
+                    @if (addedEvents.Count == 0)
+                    {
+                        <p class="text-center text-muted py-4 mb-0 small">
+                            No events added yet. Use the form above to add events.
+                        </p>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="small ps-3">#</th>
+                                        <th class="small">Event Name</th>
+                                        <th class="small">Month</th>
+                                        <th class="small">Estimate</th>
+                                        <th class="small">Requirements</th>
+                                        <th class="small text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for (int i = 0; i < addedEvents.Count; i++)
+                                    {
+                                        int idx = i;
+                                        var ev = addedEvents[idx];
+                                        <tr>
+                                            <td class="text-muted ps-3">@(idx + 1)</td>
+                                            <td class="fw-semibold">@ev.Name</td>
+                                            <td>@ev.EstimateMonth</td>
+                                            <td>
+                                                @(ev.EstimateAmount.HasValue
+                                                    ? "Rs " + ev.EstimateAmount.Value.ToString("N0")
+                                                    : "—")
+                                            </td>
+                                            <td>
+                                                @if (ev.YearlyEventRequirements != null && ev.YearlyEventRequirements.Any())
+                                                {
+                                                    <ul class="mb-0 ps-3 small text-muted">
+                                                        @foreach (var r in ev.YearlyEventRequirements)
+                                                        {
+                                                            <li>
+                                                                @r.Name
+                                                                @if (r.EstimatePrice.HasValue)
+                                                                {
+                                                                    <span class="text-success"> — Rs @r.EstimatePrice.Value.ToString("N0")</span>
+                                                                }
+                                                            </li>
+                                                        }
+                                                    </ul>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted small">None</span>
+                                                }
+                                            </td>
+                                            <td class="text-center">
+                                                <button class="btn btn-outline-warning btn-sm py-0 px-2 me-1"
+                                                        title="Edit Event"
+                                                        @onclick="() => EditEvent(idx)">
+                                                    <i class="bi bi-pencil"></i>
+                                                </button>
+                                                <button class="btn btn-outline-danger btn-sm py-0 px-2"
+                                                        title="Delete Event"
+                                                        @onclick="() => DeleteEvent(idx)">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+
+                </div>
+
+                <!-- Create Button Bottom Right -->
+                <div class="card-footer bg-white border-top d-flex justify-content-end py-3">
+                    @if (isSubmitting)
+                    {
+                        <button class="btn btn-success px-4" disabled>
+                            <span class="spinner-border spinner-border-sm me-2"></span> Creating...
+                        </button>
+                    }
+                    else
+                    {
+                        <button class="btn btn-success px-4"
+                                @onclick="SubmitBudget"
+                                disabled="@(eventEditIndex.HasValue || reqEditIndex.HasValue)">
+                            <i class="bi bi-check-circle me-1"></i> Create Yearly Budget
+                        </button>
+                        <button class="btn btn-secondary px-4 ms-2"
+                                 @onclick="CancleBudget"
+                                 disabled="@(eventEditIndex.HasValue || reqEditIndex.HasValue)">
+                            <i class="bi bi-x-circle me-1"></i> Cancel
+                        </button>
+                    }
+
+                    @if (eventEditIndex.HasValue || reqEditIndex.HasValue)
+                    {
+                        <span class="text-warning small ms-3 align-self-center">
+                            <i class="bi bi-exclamation-triangle me-1"></i>
+                            Finish editing before creating.
+                        </span>
+                    }
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+@inject ChairpersonServices chairpersonServices
+@inject ClaimServices claimServices
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+
+@code {
+
+    // ── Budget ──────────────────────────────────────────────
+    private CreateYearlyBudgetDto newBudget = new()
+    {
+        Session = $"{DateTime.Now.Year}-{DateTime.Now.Year + 1}",
+        RequestedAmount = 0,
+        RequestedDate = DateTime.Today
+    };
+
+    // ── Events list (final) ─────────────────────────────────
+    private List<CreateYearlyEventDto> addedEvents = new();
+
+    // ── Event form state ────────────────────────────────────
+    private CreateYearlyEventDto eventForm = new() { Name = "", EstimateMonth = "" };
+    private int? eventEditIndex = null;
+
+    // ── Requirements list (for the current event being built) ─
+    private List<CreateYearlyEventRequirementDto> eventRequirements = new();
+
+    // ── Requirement form state ──────────────────────────────
+    private CreateYearlyEventRequirementDto reqForm = new() { Name = "" };
+    private int? reqEditIndex = null;
+
+    // ── Validation flags ────────────────────────────────────
+    private bool eventNameError = false;
+    private bool eventMonthError = false;
+    private bool reqNameError = false;
+    private bool noEventsError = false;
+
+    private bool isSubmitting = false;
+
+    private readonly string[] months = new[]
+    {
+        "January","February","March","April","May","June",
+        "July","August","September","October","November","December"
+    };
+
+    // ── Requirement Actions ─────────────────────────────────
+
+    private void AddRequirement()
+    {
+        reqNameError = string.IsNullOrWhiteSpace(reqForm.Name);
+        if (reqNameError) return;
+
+        eventRequirements.Add(new CreateYearlyEventRequirementDto
+        {
+            Name = reqForm.Name.Trim(),
+            EstimatePrice = reqForm.EstimatePrice
+        });
+
+        ResetReqForm();
+    }
+
+    private void EditRequirement(int index)
+    {
+        var req = eventRequirements[index];
+        reqForm = new CreateYearlyEventRequirementDto
+        {
+            Name = req.Name,
+            EstimatePrice = req.EstimatePrice
+        };
+        reqEditIndex = index;
+        reqNameError = false;
+    }
+
+    private void UpdateRequirement()
+    {
+        reqNameError = string.IsNullOrWhiteSpace(reqForm.Name);
+        if (reqNameError) return;
+
+        eventRequirements[reqEditIndex!.Value] = new CreateYearlyEventRequirementDto
+        {
+            Name = reqForm.Name.Trim(),
+            EstimatePrice = reqForm.EstimatePrice
+        };
+
+        ResetReqForm();
+    }
+
+    private void RemoveRequirement(int index)
+    {
+        eventRequirements.RemoveAt(index);
+        if (reqEditIndex == index) ResetReqForm();
+    }
+
+    private void CancelReqEdit() => ResetReqForm();
+
+    private void ResetReqForm()
+    {
+        reqForm = new CreateYearlyEventRequirementDto { Name = "" };
+        reqEditIndex = null;
+        reqNameError = false;
+    }
+
+    // ── Event Actions ───────────────────────────────────────
+
+    private void AddEvent()
+    {
+        eventNameError = string.IsNullOrWhiteSpace(eventForm.Name);
+        eventMonthError = string.IsNullOrWhiteSpace(eventForm.EstimateMonth);
+        if (eventNameError || eventMonthError) return;
+
+        addedEvents.Add(new CreateYearlyEventDto
+        {
+            Name = eventForm.Name.Trim(),
+            EstimateMonth = eventForm.EstimateMonth,
+            EstimateAmount = eventRequirements.Count > 0 ? eventRequirements.Sum(r => r.EstimatePrice ?? 0) : eventForm.EstimateAmount,
+            YearlyEventRequirements = new List<CreateYearlyEventRequirementDto>(eventRequirements)
+        });
+
+        noEventsError = false;
+        ResetEventForm();
+    }
+
+    private void EditEvent(int index)
+    {
+        var ev = addedEvents[index];
+
+        eventForm = new CreateYearlyEventDto
+        {
+            Name = ev.Name,
+            EstimateMonth = ev.EstimateMonth,
+            EstimateAmount = ev.EstimateAmount
+        };
+
+        // Load its requirements into the mini table
+        eventRequirements = ev.YearlyEventRequirements != null
+            ? new List<CreateYearlyEventRequirementDto>(ev.YearlyEventRequirements)
+            : new List<CreateYearlyEventRequirementDto>();
+
+        eventEditIndex = index;
+        eventNameError = false;
+        eventMonthError = false;
+        ResetReqForm();
+    }
+
+    private void UpdateEvent()
+    {
+        eventNameError = string.IsNullOrWhiteSpace(eventForm.Name);
+        eventMonthError = string.IsNullOrWhiteSpace(eventForm.EstimateMonth);
+        if (eventNameError || eventMonthError) return;
+
+        addedEvents[eventEditIndex!.Value] = new CreateYearlyEventDto
+        {
+            Name = eventForm.Name.Trim(),
+            EstimateMonth = eventForm.EstimateMonth,
+            EstimateAmount = eventRequirements.Count > 0 ? eventRequirements.Sum(r => r.EstimatePrice ?? 0) : eventForm.EstimateAmount,
+            YearlyEventRequirements = new List<CreateYearlyEventRequirementDto>(eventRequirements)
+        };
+
+        ResetEventForm();
+    }
+
+    private void DeleteEvent(int index)
+    {
+        addedEvents.RemoveAt(index);
+        if (eventEditIndex == index) ResetEventForm();
+    }
+
+    private void CancelEventEdit() => ResetEventForm();
+
+    private void ResetEventForm()
+    {
+        eventForm = new CreateYearlyEventDto { Name = "", EstimateMonth = "" };
+        eventEditIndex = null;
+        eventNameError = false;
+        eventMonthError = false;
+        eventRequirements = new();
+        ResetReqForm();
+    }
+
+    // ── Submit ──────────────────────────────────────────────
+
+    private async Task SubmitBudget()
+    {
+        // Validate at least one event
+        if (addedEvents.Count == 0)
+        {
+            noEventsError = true;
+            return;
+        }
+
+        // Block if in edit mode (button is disabled but double-check)
+        if (eventEditIndex.HasValue || reqEditIndex.HasValue) return;
+
+        newBudget.YearlyEvents = addedEvents;
+        isSubmitting = true;
+
+        try
+        {
+            var claims = await claimServices.GetClaims();
+            var response = await chairpersonServices.CreateYearlyBudget(newBudget, Guid.Parse(claims.Id));
+
+            if (response.Success)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Yearly budget created successfully!");
+                NavigationManager.NavigateTo("/chairperson/yearly-budget");
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "Failed to create yearly budget: " + response.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "An error occurred: " + ex.Message);
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private async Task CancleBudget()
+    {
+        bool confirm = await JSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to cancel? All changes will be lost.");
+        if (confirm) NavigationManager.NavigateTo("/chairperson/yearly-budget");
+
+        ResetEventForm();
+        addedEvents.Clear();
+    }
+}

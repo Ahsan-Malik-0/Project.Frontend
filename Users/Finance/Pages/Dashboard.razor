@@ -1,0 +1,185 @@
+﻿@page "/finance"
+
+@layout FinanceLayout
+
+@attribute [Authorize(Roles = "finance")]
+
+<div class="container-fluid px-4">
+    @if (isLoading)
+    {
+        <div class="text-center text-muted py-5">
+            <div class="spinner-border spinner-border-sm mb-2"></div>
+            <p class="mb-0">Loading requisitions...</p>
+        </div>
+    }
+    else if (requisitionDetails == null || requisitionDetails.Count == 0)
+    {
+        <div class="text-center text-muted py-5">
+            <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+            <p class="mb-0">No pending requisition requests found.</p>
+        </div>
+    }
+    else
+    {
+        <div class="row g-4">
+            @foreach (var req in requisitionDetails)
+            {
+                <div class="col-12 col-md-6 col-xl-4">
+                    <div class="card border shadow-sm h-100">
+
+                        <!-- Card Header -->
+                        <div class="card-header bg-white border-bottom d-flex align-items-center justify-content-between py-3">
+                            <span class="fw-semibold">@req.SocietyName</span>
+                        </div>
+
+                        <!-- Card Body -->
+                        <div class="card-body">
+                            <p class="mb-2 small">
+                                <i class="bi bi-card-text me-1 text-muted"></i>
+                                <span class="text-muted">Event Name:</span>
+                                <span class="fw-semibold ms-1">@req.EventName</span>
+                            </p>
+                            <p class="mb-2 small">
+                                <i class="bi bi-calendar-event me-1 text-muted"></i>
+                                <span class="text-muted">Event Date:</span>
+                                <span class="fw-semibold ms-1">@req.EventDate.ToString("dd MMM yyyy")</span>
+                            </p>
+                            <p class="mb-0 small">
+                                <i class="bi bi-currency-dollar me-1 text-muted"></i>
+                                <span class="text-muted">Alloted Budget:</span>
+                                <span class="fw-semibold text-primary ms-1">Rs @req.AllotedBudget.ToString("N0")</span>
+                            </p>
+                        </div>
+
+                        <!-- Card Footer -->
+                        <div class="card-footer bg-white border-top d-flex gap-2 py-3">
+                            <button class="btn btn-outline-success btn-sm flex-fill"
+                                    @onclick="() => OpenReleasedModal(req.RequisitionId)">
+                                <i class="bi bi-check-circle me-1"></i> Release Budget
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+
+<!-- ===== MODAL: Release Budget ===== -->
+@if (showReleasedModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.5)">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header border-bottom">
+                    <h6 class="modal-title fw-bold">
+                        <i class="bi bi-cash-stack text-success me-2"></i>Release Budget
+                    </h6>
+                    <button class="btn-close" @onclick="CloseAllModals"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small mb-3">
+                        Provide the name of the member to whom the budget will be released.
+                    </p>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Member Name</label>
+                        <input class="form-control"
+                               placeholder="Enter member name"
+                               @bind="activeReviewMessage" />
+                    </div>
+                </div>
+                <div class="modal-footer border-top">
+                    <button class="btn btn-outline-secondary btn-sm" @onclick="CloseAllModals">Cancel</button>
+                    <button class="btn btn-success btn-sm px-4"
+                            disabled="@isActing"
+                            @onclick="ConfirmReleasedBudget">
+                        @if (isActing)
+                        {
+                            <span class="spinner-border spinner-border-sm me-1"></span>
+                        }
+                        Release
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+
+@inject FinanceService FinanceService
+@inject IJSRuntime JSRuntime
+
+@code {
+    private bool isLoading = false;
+    private bool isActing = false;
+
+    // Fix 1: initialize to new() instead of null! to avoid null crashes
+    private List<ViewRequisitionDetailsForFinanceDto> requisitionDetails = new();
+
+    // Fix 2: removed unused `reviewMessage` field
+    private string activeReviewMessage = string.Empty;
+    private Guid activeRequisitionId;
+
+    private bool showReleasedModal = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true;
+        try
+        {
+            // Fix 3: assign to new list if service returns null
+            requisitionDetails = await FinanceService.GetRequisitionRequestDetails() ?? new();
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("console.error", $"Error fetching requisition details: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void OpenReleasedModal(Guid requisitionId)
+    {
+        activeRequisitionId = requisitionId;
+        activeReviewMessage = string.Empty;
+        showReleasedModal = true;
+    }
+
+    private void CloseAllModals()
+    {
+        showReleasedModal = false;
+    }
+
+    private async Task ConfirmReleasedBudget()
+    {
+        isActing = true;
+        try
+        {
+            // Fix 4: null check on response before accessing .Success
+            string responseMessage = $"Amount is handed over to {activeReviewMessage.Trim()}";
+            var response = await FinanceService.ReleasedEventRequisitionBudget(activeRequisitionId, activeReviewMessage);
+
+            CloseAllModals();
+
+            if (response.Success)
+                await JSRuntime.InvokeVoidAsync("console.log", "Budget released successfully.");
+            else
+                await JSRuntime.InvokeVoidAsync("console.error", $"Failed to release budget: {response.Error}");
+
+            await OnInitializedAsync();
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("console.error", $"Error releasing budget: {ex.Message}");
+        }
+        finally
+        {
+            isActing = false;
+        }
+    }
+
+}

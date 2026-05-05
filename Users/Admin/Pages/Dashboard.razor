@@ -1,0 +1,404 @@
+﻿@page "/admin"
+
+@layout AdminLayout
+
+@attribute [Authorize(Roles = "admin")]
+
+
+<div class="container-fluid px-4">
+
+    <div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-4">
+        <h4 class="fw-bold mb-0">Pending Event Requisitions</h4>
+
+        <div class="d-flex flex-wrap gap-2 align-items-end">
+
+            <!-- Society Filter -->
+            <div>
+                <label class="form-label small fw-semibold mb-1">Society</label>
+                <select class="form-select form-select-sm" style="min-width: 160px;"
+                        @bind="filterSociety">
+                    <option value="">All Societies</option>
+                    @foreach (var name in requisitionRequestDetails.Select(r => r.SocietyName).Distinct())
+                    {
+                        <option value="@name">@name</option>
+                    }
+                </select>
+            </div>
+
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="text-center text-muted py-5">
+            <div class="spinner-border spinner-border-sm mb-2"></div>
+            <p class="mb-0">Loading requisitions...</p>
+        </div>
+    }
+    else if (requisitionRequestDetails == null || requisitionRequestDetails.Count == 0)
+    {
+        <div class="text-center text-muted py-5">
+            <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+            <p class="mb-0">No pending requisition requests found.</p>
+        </div>
+    }
+    else
+    {
+        <div class="row g-4">
+            @foreach (var req in requisitionRequestDetails)
+            {
+                <div class="col-12 col-md-6 col-xl-4">
+                    <div class="card border shadow-sm h-100">
+
+                        <!-- Card Header -->
+                        <div class="card-header bg-white border-bottom d-flex align-items-center justify-content-between py-3">
+                            <span class="fw-semibold">@req.SocietyName</span>
+                        </div>
+
+                        <!-- Card Body -->
+                        <div class="card-body">
+                            <p class="mb-2 small">
+                                <i class="bi bi-card-text me-1 text-muted"></i>
+                                <span class="text-muted">Event Name:</span>
+                                <span class="fw-semibold ms-1">@req.EventName</span>
+                            </p>
+                            <p class="mb-2 small">
+                                <i class="bi bi-calendar-event me-1 text-muted"></i>
+                                <span class="text-muted">Event Date:</span>
+                                <span class="fw-semibold ms-1">@req.EventDate.ToString("dd MMM yyyy")</span>
+                            </p>
+                            <p class="mb-2 small">
+                                <i class="bi bi-send me-1 text-muted"></i>
+                                <span class="text-muted">Requested On:</span>
+                                <span class="fw-semibold ms-1">@req.RequestedDate.ToString("dd MMM yyyy")</span>
+                            </p>
+                            <p class="mb-0 small">
+                                <i class="bi bi-currency-dollar me-1 text-muted"></i>
+                                <span class="text-muted">Requested Amount:</span>
+                                <span class="fw-semibold text-primary ms-1">Rs @req.RequestedAmount.ToString("N0")</span>
+                            </p>
+                        </div>
+
+                        <!-- Card Footer -->
+                        <div class="card-footer bg-white border-top d-flex gap-2 py-3">
+                            <button class="btn btn-outline-primary btn-sm flex-fill"
+                                    @onclick="() => OpenViewModal(req.Id)">
+                                <i class="bi bi-eye me-1"></i> View
+                            </button>
+                            <button class="btn btn-outline-success btn-sm flex-fill"
+                                    @onclick="() => HandleApprove(req.Id)">
+                                <i class="bi bi-check-circle me-1"></i> Approve
+                            </button>
+                            <button class="btn btn-outline-danger btn-sm flex-fill"
+                                    @onclick="() => OpenRejectModal(req.Id)">
+                                <i class="bi bi-x-circle me-1"></i> Reject
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+</div>
+
+<!-- ===== MODAL: View Requisition Details ===== -->
+@if (showViewModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.5)">
+        <div class="modal-dialog modal-dialog-centered model-lg modal-dialog-scrollable">
+            <div class="modal-content border shadow">
+                <div class="modal-header border-bottom">
+                    <h6 class="modal-title fw-bold">Requisition Details</h6>
+                    <button class="btn-close" @onclick="CloseAllModals"></button>
+                </div>
+                <div class="modal-body p-4">
+
+                    @if (isLoadingDetails)
+                    {
+                        <div class="text-center text-muted py-4">
+                            <div class="spinner-border spinner-border-sm mb-2"></div>
+                            <p class="mb-0">Loading details...</p>
+                        </div>
+                    }
+                    else if (singleRequisitionDetails == null)
+                    {
+                        <p class="text-center text-muted">No details available.</p>
+                    }
+                    else
+                    {
+                        <!-- Application Form (matches reference style) -->
+
+                        <!-- Header -->
+                        <div class="d-flex align-items-center gap-4 border-bottom pb-3 mb-4">
+                            <img src="/images/biit_logo.png" alt="BIIT Logo" style="max-width:70px;" />
+                            <div>
+                                <h5 class="fw-bold mb-0">Barani Institute Of Information Technology</h5>
+                                <small class="text-muted">Official Event Requisition Application</small>
+                            </div>
+                        </div>
+
+                        <!-- Subject + Dates -->
+                        <div class="mb-4">
+                            <p class="mb-1">
+                                <strong>Subject:</strong> @singleRequisitionDetails.Subject
+                            </p>
+                            <p class="mb-1">
+                                <strong>Requested Date:</strong> @singleRequisitionDetails.RequestedDate.ToString("dd MMM yyyy")
+                            </p>
+                            <p class="mb-0">
+                                <strong>Event Date:</strong> @singleRequisitionDetails.EventDate.ToString("dd MMM yyyy")
+                            </p>
+                        </div>
+
+                        <!-- Body -->
+                        <div class="mb-4">
+                            <p>Respected Sir,</p>
+                            <p style="white-space: pre-line;">@singleRequisitionDetails.Body</p>
+                        </div>
+
+                        <!-- Requirements Table -->
+                        @if (singleRequisitionDetails.EventRequirements != null && singleRequisitionDetails.EventRequirements.Any())
+                        {
+                            <strong>@singleRequisitionDetails.SocietyName Society need the following:</strong>
+                            <div class="table-responsive mb-4 mt-2">
+                                <table class="table table-bordered align-middle">
+                                    <thead class="table-light text-center">
+                                        <tr>
+                                            <th>Type</th>
+                                            <th>Name</th>
+                                            <th>Qty</th>
+                                            <th>Unit Price</th>
+                                            <th>Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var r in singleRequisitionDetails.EventRequirements)
+                                        {
+                                            <tr>
+                                                <td>@r.Type</td>
+                                                <td>@r.Name</td>
+                                                <td class="text-center">@r.Quantity</td>
+                                                <td class="text-end">@r.Price.ToString("N2")</td>
+                                                <td class="text-end fw-semibold">@((r.Quantity * r.Price).ToString("N2"))</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                    <tfoot class="table-light">
+                                        <tr>
+                                            <td colspan="4" class="text-end fw-bold">Total Requested Amount:</td>
+                                            <td class="text-end fw-bold text-primary">
+                                                @singleRequisitionDetails.EventRequirements.Sum(r => r.Quantity * r.Price).ToString("N2")
+                                            </td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-center text-muted">No requirements added for this event.</p>
+                        }
+
+                        <!-- Signature -->
+                        <div class="mt-5 pt-4 border-top">
+                            <p class="mb-1 fw-semibold">@singleRequisitionDetails.ChairpersonName</p>
+                            <p class="mb-4 text-muted">Chairperson (@singleRequisitionDetails.SocietyName)</p>
+                            <p class="mb-1 fw-semibold">Mr. Shahid Rashid</p>
+                            <p class="text-muted">Assistant Director Student Affairs</p>
+                        </div>
+                    }
+
+                </div>
+                <div class="modal-footer border-top">
+                    <button class="btn btn-secondary btn-sm" @onclick="CloseAllModals">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+
+<!-- ===== MODAL: Reject ===== -->
+@if (showRejectModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.5)">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header border-bottom">
+                    <h6 class="modal-title fw-bold">
+                        <i class="bi bi-x-circle text-danger me-2"></i>Reject Requisition
+                    </h6>
+                    <button class="btn-close" @onclick="CloseAllModals"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small mb-3">
+                        Provide a review message explaining the reason for rejection.
+                    </p>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">Review Message</label>
+                        <textarea class="form-control"
+                                  rows="4"
+                                  placeholder="Write your rejection reason here..."
+                                  @bind="reviewMessage"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-top">
+                    <button class="btn btn-outline-secondary btn-sm" @onclick="CloseAllModals">Cancel</button>
+                    <button class="btn btn-danger btn-sm px-4"
+                            disabled="@isActing"
+                            @onclick="ConfirmReject">
+                        @if (isActing)
+                        {
+                            <span class="spinner-border spinner-border-sm me-1"></span>
+                        }
+                        Send
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+
+
+@inject AdminServices adminServices
+@inject IJSRuntime JSRuntime
+
+@code {
+    // ── Data ────────────────────────────────────────────────
+    private bool isLoading = false;
+    private bool isLoadingDetails = false;
+    private bool isActing = false;
+
+    private List<ViewRequisitionRequestDetailsDto> requisitionRequestDetails = new();
+    private EventRequisitionDetailsDto? singleRequisitionDetails;
+    private string reviewMessage = string.Empty;
+
+    // ── Active selection ────────────────────────────────────
+    private Guid activeRequisitionId;
+    private decimal activeRequestedAmount;
+    private string activeReviewMessage = string.Empty;
+
+    // ── Modal flags ─────────────────────────────────────────
+    private bool showReviewModal = false;
+    private bool showViewModal = false;
+    private bool showRejectModal = false;
+    private bool showApproveModal = false;
+
+    // ── Init ─────────────────────────────────────────────────
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true;
+        try
+        {
+            var data = await adminServices.GetRequisitionRequestDetails();
+            requisitionRequestDetails = data ?? new();
+        }
+        catch (Exception ex)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "An error occurred while fetching requisition requests.");
+            Console.WriteLine($"Error fetching data: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    // ── Modal Openers ────────────────────────────────────────
+
+    private async Task OpenViewModal(Guid requisitionId)
+    {
+        showViewModal = true;
+        isLoadingDetails = true;
+        singleRequisitionDetails = null;
+
+        try
+        {
+            var data = await adminServices.ViewRequisitionRequestDetails(requisitionId);
+            singleRequisitionDetails = data;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error fetching details: {ex.Message}");
+        }
+        finally
+        {
+            isLoadingDetails = false;
+        }
+    }
+
+    private void OpenRejectModal(Guid requisitionId)
+    {
+        activeRequisitionId = requisitionId;
+        reviewMessage = string.Empty;
+        showRejectModal = true;
+    }
+
+    private void CloseAllModals()
+    {
+        showReviewModal = false;
+        showViewModal = false;
+        showRejectModal = false;
+        showApproveModal = false;
+        singleRequisitionDetails = null;
+    }
+
+    // ── Actions ──────────────────────────────────────────────
+    private async Task ConfirmReject()
+    {
+        isActing = true;
+        try
+        {
+            var response = await adminServices.RejectEventRequisition(activeRequisitionId, reviewMessage);
+            CloseAllModals();
+
+            if (response.Success)
+                await JSRuntime.InvokeVoidAsync("alert", "Requisition rejected successfully.");
+            else
+                await JSRuntime.InvokeVoidAsync("alert", $"Failed to reject: {response.Error}");
+
+            await OnInitializedAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error rejecting request: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("alert", "An error occurred while rejecting the request.");
+        }
+        finally
+        {
+            isActing = false;
+        }
+    }
+
+    private async Task HandleApprove(Guid requisitionId)
+    {
+        isActing = true;
+        try
+        {
+            var response = await adminServices.ApproveEventRequisition(requisitionId);
+            CloseAllModals();
+
+            if (response)
+                await JSRuntime.InvokeVoidAsync("alert", "Requisition approved successfully.");
+            else
+                await JSRuntime.InvokeVoidAsync("alert", $"Failed to approve");
+
+            await OnInitializedAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error approving request: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("alert", "An error occurred while approving the request.");
+        }
+        finally
+        {
+            isActing = false;
+        }
+    }
+
+    // ── Filters ──────────────────────────────────────────────
+    private string filterSociety = string.Empty;
+}
