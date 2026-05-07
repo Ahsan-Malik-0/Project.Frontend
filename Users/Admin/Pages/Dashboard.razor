@@ -72,10 +72,15 @@
                                 <span class="text-muted">Requested On:</span>
                                 <span class="fw-semibold ms-1">@req.RequestedDate.ToString("dd MMM yyyy")</span>
                             </p>
-                            <p class="mb-0 small">
-                                <i class="bi bi-currency-dollar me-1 text-muted"></i>
+                            <p class="mb-2 small">
+                                <i class="bi bi-cash me-1 text-muted"></i>
                                 <span class="text-muted">Requested Amount:</span>
-                                <span class="fw-semibold text-primary ms-1">Rs @req.RequestedAmount.ToString("N0")</span>
+                                <span class="fw-semibold ms-1">Rs @req.RequestedAmount.ToString("N0")</span>
+                            </p>
+                            <p class="mb-2 small">
+                                <i class="bi bi-cash me-1 text-muted"></i>
+                                <span class="text-muted">Requested Amount:</span>
+                                <span class="fw-semibold text-primary ms-1">Rs @req.AllotedAmount.ToString("N0")</span>
                             </p>
                         </div>
 

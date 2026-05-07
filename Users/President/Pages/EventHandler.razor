@@ -26,8 +26,9 @@
                         <label class="form-label">Event Date</label>
                         <input class="form-control"
                                type="date"
-                               @bind="event_date" />
+                               @bind="@event_date" />
                     </div>
+
 
                     @if (!string.IsNullOrEmpty(eventError))
                     {

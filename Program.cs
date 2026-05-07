@@ -5,10 +5,11 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Project.Frontend;
 using Project.Frontend.AdminServices;
 using Project.Frontend.Auth.Services;
-using Project.Frontend.Chairperson.Services;
-using Project.Frontend.President.Services;
-using Project.Frontend.Shared.Services;
-using Project.Frontend.StudentAffairs.Services;
+using Project.Frontend.ChairpersonServices;
+using Project.Frontend.PresidentServices;
+using Project.Frontend.SharedServices;
+using Project.Frontend.StudentAffairsServices;
+using Project.Frontend.FinanceServices;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -28,6 +29,6 @@ builder.Services.AddScoped<PresidentServices>();
 builder.Services.AddScoped<ChairpersonServices>();
 builder.Services.AddScoped<StudentAffairsServices>();
 builder.Services.AddScoped<AdminServices>();
-builder.Services.AddScoped<FinanceService>();
+builder.Services.AddScoped<FinanceServices>();
 
 await builder.Build().RunAsync();

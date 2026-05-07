@@ -52,6 +52,7 @@ namespace Project.Frontend.Model.DTOs
         public DateTime RequestedDate { get; set; }
         public required string SocietyName { get; set; }
         public decimal RequestedAmount { get; set; }
+        public decimal AllotedAmount { get; set; }
 
     }
 
@@ -71,10 +72,17 @@ namespace Project.Frontend.Model.DTOs
     public class ViewRequisitionDetailsForFinanceDto
     {
         public Guid RequisitionId { get; set; }
+        public string? ChairpersonName { get; set; }
         public required string SocietyName { get; set; }
         public required string EventName { get; set; }
         public DateTime EventDate { get; set; }
         public Decimal AllotedBudget { get; set; }
+    }
+
+    public class ViewRequisitionDetailsForStudentAffairsDto : ViewRequisitionDetailsForFinanceDto 
+    {
+        public required string Status { get; set; }
+        public string? ReviewMessage { get; set; }
     }
 
     public class ResponseMessageDto

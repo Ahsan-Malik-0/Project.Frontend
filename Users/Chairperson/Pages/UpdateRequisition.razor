@@ -348,7 +348,7 @@
             var chairperson = await chairpersonServices.GetChairpersonDetailsForRequisition(Guid.Parse(claims.Id));
             if (chairperson != null)
             {
-                chairpersonName = chairperson.ChaipersonName ?? "";
+                chairpersonName = chairperson.ChairpersonName ?? "";
                 societyName = chairperson.SocietyName ?? "";
             }
 

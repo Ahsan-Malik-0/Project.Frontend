@@ -4,7 +4,7 @@ using Project.Frontend.Model;
 using System.Net.Http.Json;
 using System.Security.Claims;
 
-namespace Project.Frontend.Shared.Services
+namespace Project.Frontend.SharedServices
 {
     public class ClaimServices
     {

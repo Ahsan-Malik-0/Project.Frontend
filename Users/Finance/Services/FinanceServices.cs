@@ -4,13 +4,13 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json.Nodes;
 
-namespace Project.Frontend.AdminServices
+namespace Project.Frontend.FinanceServices
 {
-    public class FinanceService
+    public class FinanceServices
     {
         private readonly HttpClient httpClient;
 
-        public FinanceService(HttpClient httpClient)
+        public FinanceServices(HttpClient httpClient)
         {
             this.httpClient = httpClient;
         }
@@ -51,27 +51,47 @@ namespace Project.Frontend.AdminServices
         //    }
         //}
 
-        //public async Task<ResponseResult> RejectEventRequisition(Guid requisitionId, string reason)
-        //{
-        //    try
-        //    {
-        //        var response = await httpClient.PostAsJsonAsync($"Finance/RejectEventRequisition/{requisitionId}", reason);
-        //        if (!response.IsSuccessStatusCode)
-        //        {
-        //            var resString = await response.Content.ReadAsStringAsync();
-        //            var jsonNode = JsonNode.Parse(resString);
-        //            var error = jsonNode?["errors"]?.ToString() ?? string.Empty;
+        public async Task<ResponseResult> RejectEventRequisition(Guid requisitionId, string reason)
+        {
+            try
+            {
+                ResponseMessageDto responseMessage = new ResponseMessageDto() { ResponseMessage = reason };
 
-        //            return new ResponseResult() { Success = false, Error = error };
-        //        }
+                var response = await httpClient.PostAsJsonAsync($"Finance/RejectEventRequisition/{requisitionId}", responseMessage);
+                if (!response.IsSuccessStatusCode)
+                {
+                    var resString = await response.Content.ReadAsStringAsync();
+                    var jsonNode = JsonNode.Parse(resString);
+                    var error = jsonNode?["errors"]?.ToString() ?? string.Empty;
 
-        //        return new ResponseResult() { Success = true };
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return new ResponseResult() { Success = false, Error = ex.Message };
-        //    }
-        //}
+                    return new ResponseResult() { Success = false, Error = error };
+                }
+
+                return new ResponseResult() { Success = true };
+            }
+            catch (Exception ex)
+            {
+                return new ResponseResult() { Success = false, Error = ex.Message };
+            }
+        }
+
+        public async Task<ChairpersonDetailsForRequisitionDto?> GetChairpersonDetailsForRequisition(string societyName)
+        {
+            try
+            {
+                var response = await httpClient.GetAsync($"Finance/getChairpersonDetails/{societyName}");
+                if (!response.IsSuccessStatusCode)
+                    return null;
+
+                var chairpersonDetails = await response.Content.ReadFromJsonAsync<ChairpersonDetailsForRequisitionDto>();
+
+                return chairpersonDetails ?? null;
+            }
+            catch
+            {
+                return null;
+            }
+        }
 
         public async Task<ResponseResult> ReleasedEventRequisitionBudget(Guid requisitionId, string reviewMessage)
         {

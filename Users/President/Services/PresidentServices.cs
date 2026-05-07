@@ -3,7 +3,7 @@ using Project.Frontend.Model.DTOs;
 using System.Net.Http.Json;
 using System.Text.Json.Nodes;
 
-namespace Project.Frontend.President.Services
+namespace Project.Frontend.PresidentServices
 {
     public class PresidentServices
     {

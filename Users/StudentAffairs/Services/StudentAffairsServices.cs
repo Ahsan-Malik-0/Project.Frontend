@@ -1,11 +1,9 @@
 using Project.Frontend.Model;
 using Project.Frontend.Model.DTOs;
 using System.Net.Http.Json;
-using System.Text;
 using System.Text.Json.Nodes;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
-namespace Project.Frontend.StudentAffairs.Services
+namespace Project.Frontend.StudentAffairsServices
 {
     public class StudentAffairsServices
     {
@@ -43,6 +41,27 @@ namespace Project.Frontend.StudentAffairs.Services
                     return null;
 
                 var requisitionDetails = await response.Content.ReadFromJsonAsync<EventRequisitionDetailsDto>();
+
+                return requisitionDetails ?? null;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+       
+
+        // view Approved requisition details
+        public async Task<List<ViewRequisitionDetailsForStudentAffairsDto>?> ViewApprovedRequisitionDetails()
+        {
+            try
+            {
+                var response = await httpClient.GetAsync($"StudentAffairs/ViewApprovedRequisitionDetails");
+                if (!response.IsSuccessStatusCode)
+                    return null;
+
+                var requisitionDetails = await response.Content.ReadFromJsonAsync<List<ViewRequisitionDetailsForStudentAffairsDto>>();
 
                 return requisitionDetails ?? null;
             }

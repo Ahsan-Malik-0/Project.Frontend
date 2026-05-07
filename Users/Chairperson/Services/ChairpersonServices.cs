@@ -4,7 +4,7 @@ using Project.Frontend.Model.DTOs;
 using System.Net.Http.Json;
 using System.Text.Json.Nodes;
 
-namespace Project.Frontend.Chairperson.Services
+namespace Project.Frontend.ChairpersonServices
 {
     public class ChairpersonServices
     {

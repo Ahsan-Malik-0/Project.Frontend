@@ -41,7 +41,7 @@ namespace Project.Frontend.Model.DTOs
 
     public class ChairpersonDetailsForRequisitionDto
     {
-        public string? ChaipersonName { get; set; }
+        public string? ChairpersonName { get; set; }
         public string? SocietyName { get; set; }
     }
 }
