@@ -102,7 +102,7 @@
                     {
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">Name</label>
+                                <label class="form-label">Category</label>
                                 <select class="form-select" @bind="main_type">
                                     @foreach (var option in nonFinancialOptions.GetAllTypes())
                                     {
@@ -143,15 +143,26 @@
                                 }
                             </div>
 
-                            <div class="w-100 mb-3">
+                            <div class="col-md-6 mb-3">
                                 <label class="form-label">Other Type</label>
                                 <input 
                                     disabled="@(main_type != "Other")" 
                                     class="form-control" 
                                     type="text" 
                                     @bind="req_name" 
-                                    />
+                                    placeholder="Type custom requirement..." />
                             </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Qty</label>
+                                <input 
+                                    type="number" 
+                                    class="form-control" 
+                                    @bind="req_qty" 
+                                    min="1" 
+                                    disabled="@(main_type != "Other")" />
+                            </div>
+
                         </div>
                     }
 

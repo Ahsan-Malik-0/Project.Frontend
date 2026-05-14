@@ -73,23 +73,89 @@
                                 </div>
                             </div>
 
-                            <!-- Name, Qty, Price -->
-                            <div class="row g-2 mb-3">
-                                <div class="col-md-6">
-                                    <label class="form-label fw-semibold">Name</label>
-                                    <input class="form-control" @bind="req_name" placeholder="Requirement name" />
+                            <!-- Financial Fields -->
+                            @if (req_type == "financial")
+                            {
+                                <div class="row g-2 mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">Name</label>
+                                        <input class="form-control" @bind="req_name" placeholder="Requirement name" />
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label fw-semibold">Qty</label>
+                                        <input type="number" class="form-control" @bind="req_qty" min="1" />
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label fw-semibold">Price</label>
+                                        <input type="number" class="form-control" @bind="req_price" min="0" />
+                                    </div>
                                 </div>
-                                <div class="col-md-3">
-                                    <label class="form-label fw-semibold">Qty</label>
-                                    <input type="number" class="form-control" @bind="req_qty" min="1" />
+                            }
+                            else
+                            {
+                                <div class="row g-2 mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">Category</label>
+                                        <select class="form-select" @bind="main_type">
+                                            @foreach (var option in nonFinancialOptions.GetAllTypes())
+                                            {
+                                                <option value="@option">@option</option>
+                                            }
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">@main_type</label>
+                                        @if (main_type == "LTs")
+                                        {
+                                            <select class="form-select" @bind="req_name">
+                                                @foreach (var option in nonFinancialOptions.GetAllLts())
+                                                {
+                                                    <option value="@option">@option</option>
+                                                }
+                                            </select>
+                                        }
+                                        else if (main_type == "Labs")
+                                        {
+                                            <select class="form-select" @bind="req_name">
+                                                @foreach (var option in nonFinancialOptions.GetAllLabs())
+                                                {
+                                                    <option value="@option">@option</option>
+                                                }
+                                            </select>
+                                        }
+                                        else if (main_type == "Other")
+                                        {
+                                            <select class="form-select" @bind="req_name">
+                                                <option value="">Select Requirement</option>
+                                                @foreach (var option in nonFinancialOptions.GetAllOthers())
+                                                {
+                                                    <option value="@option">@option</option>
+                                                }
+                                            </select>
+                                        }
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">Other Type</label>
+                                        <input class="form-control"
+                                               type="text"
+                                               disabled="@(main_type != "Other")"
+                                               @bind="req_name"
+                                               placeholder="Type custom requirement..." />
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold">Qty</label>
+                                        <input 
+                                            type="number" 
+                                            class="form-control" 
+                                            @bind="req_qty" 
+                                            min="1" 
+                                            disabled="@(main_type != "Other")" />
+                                    </div>
                                 </div>
-                                <div class="col-md-3">
-                                    <label class="form-label fw-semibold">Price</label>
-                                    <input type="number" class="form-control"
-                                           @bind="req_price" min="0"
-                                           disabled="@(req_type == "non-financial")" />
-                                </div>
-                            </div>
+                            }
 
                             @if (!string.IsNullOrEmpty(reqError))
                             {
@@ -322,7 +388,9 @@
         updateModel.EventRequirements.Sum(r => r.Quantity * r.Price);
 
     // ── Requirement fields ───────────────────────────────────
+    private NonFinancial_Req nonFinancialOptions = new();
     private string req_type = "financial";
+    private string main_type = "LTs";   // non-financial category
     private string req_name = "";
     private int req_qty = 1;
     private decimal req_price = 0;
@@ -389,7 +457,9 @@
     private void OnTypeChanged(ChangeEventArgs e)
     {
         req_type = e.Value?.ToString() ?? "financial";
-        if (req_type == "non-financial") req_price = 0;
+        req_price = 0;
+        req_name = "";
+        main_type = "LTs"; // reset category when switching type
     }
 
     // ── Requirement Actions ──────────────────────────────────
@@ -441,6 +511,17 @@
         req_price = req.Price;
         isReqEditMode = true;
         reqError = null;
+
+        // Restore main_type for non-financial so the right dropdown shows
+        if (req_type == "non-financial")
+        {
+            if (nonFinancialOptions.GetAllLts().Contains(req.Name))
+                main_type = "LTs";
+            else if (nonFinancialOptions.GetAllLabs().Contains(req.Name))
+                main_type = "Labs";
+            else
+                main_type = "Other";
+        }
     }
 
     private async Task HandleDelete(EventRequirementDto req)
@@ -458,6 +539,7 @@
         req_name = "";
         req_qty = 1;
         req_price = 0;
+        main_type = "LTs";
         isReqEditMode = false;
         selectedRequirement = null;
         reqError = null;
