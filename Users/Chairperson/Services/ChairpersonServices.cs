@@ -289,6 +289,148 @@ namespace Project.Frontend.ChairpersonServices
             }
         }
 
+        // Get requisition history
+        public async Task<List<EventRequisitionHistoryDto>> GetRequisitionHistory(Guid memberId)
+        {
+            try
+            {
+                var response = await httpClient.GetAsync($"ChairPerson/getEventRequisitionHistory/{memberId}");
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    return new List<EventRequisitionHistoryDto>();
+                }
+
+                var requisitionHistory = await response.Content.ReadFromJsonAsync<List<EventRequisitionHistoryDto>>();
+                return requisitionHistory ?? new List<EventRequisitionHistoryDto>();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return new List<EventRequisitionHistoryDto>();
+            }
+        }
+
+
+        // Handle Event Audits -------------------------------------------------------------
+        // Get event audits
+        public async Task<EventAudit?> GetEventAudit(Guid eventId)
+        {
+            try
+            {
+                var response = await httpClient.GetAsync($"ChairPerson/viewEventAudits/{eventId}");
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    return null;
+                }
+                var pendingAudits = await response.Content.ReadFromJsonAsync<EventAudit>();
+                return pendingAudits ?? null;
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return null;
+            }
+        }
+
+        // Create event audit
+        public async Task<ResponseResult> CreateEventAudit(CreateEventAuditDto createEventAuditDto)
+        {
+            try
+            {
+                var response = await httpClient.PostAsJsonAsync($"ChairPerson/createEventAudit/{createEventAuditDto.EventId}", createEventAuditDto);
+                if (!response.IsSuccessStatusCode)
+                {
+                    var resString = await response.Content.ReadAsStringAsync();
+                    var jsonNode = JsonNode.Parse(resString);
+                    var error = jsonNode?["errors"]?.ToString() ?? string.Empty;
+
+                    return new ResponseResult() { Success = false, Error = error };
+                }
+
+                return new ResponseResult() { Success = true };
+
+            }
+            catch (Exception ex)
+            {
+                return new ResponseResult() { Success = false, Error = ex.Message };
+            }
+        }
+
+        // Update event audit
+        public async Task<ResponseResult> UpdateEventAudit(Guid auditId, UpdateEventAuditDto updateEventAuditDto)
+        {
+            try
+            {
+                var response = await httpClient.PutAsJsonAsync($"ChairPerson/updateEventAudit/{auditId}", updateEventAuditDto);
+                if (!response.IsSuccessStatusCode)
+                {
+                    var resString = await response.Content.ReadAsStringAsync();
+                    var jsonNode = JsonNode.Parse(resString);
+                    var error = jsonNode?["errors"]?.ToString() ?? string.Empty;
+
+                    return new ResponseResult() { Success = false, Error = error };
+                }
+
+                return new ResponseResult() { Success = true };
+
+            }
+            catch (Exception ex)
+            {
+                return new ResponseResult() { Success = false, Error = ex.Message };
+            }
+        }
+
+        // Delete event audit
+        public async Task<ResponseResult> DeleteEventAudit(Guid auditId)
+        {
+            try
+            {
+                var response = await httpClient.DeleteAsync($"ChairPerson/deleteEventAudit/{auditId}");
+                if (!response.IsSuccessStatusCode)
+                {
+                    var resString = await response.Content.ReadAsStringAsync();
+                    var jsonNode = JsonNode.Parse(resString);
+                    var error = jsonNode?["errors"]?.ToString() ?? string.Empty;
+
+                    return new ResponseResult() { Success = false, Error = error };
+                }
+
+                return new ResponseResult() { Success = true };
+
+            }
+            catch (Exception ex)
+            {
+                return new ResponseResult() { Success = false, Error = ex.Message };
+            }
+        }
+
+        public async Task<ResponseResult> VerifyTakeAmount(Guid auditId)
+        {
+            try
+            {
+                var response = await httpClient.GetAsync($"ChairPerson/verifyTakeAmount/{auditId}");
+                if (!response.IsSuccessStatusCode)
+                {
+                    var resString = await response.Content.ReadAsStringAsync();
+                    var jsonNode = JsonNode.Parse(resString);
+                    var error = jsonNode?["errors"]?.ToString() ?? string.Empty;
+
+                    return new ResponseResult() { Success = false, Error = error };
+                }
+
+                return new ResponseResult() { Success = true };
+
+            }
+            catch (Exception ex)
+            {
+                return new ResponseResult() { Success = false, Error = ex.Message };
+            }
+        }
+
+
         // Handle Yearly Budget -------------------------------------------------------------
         // Get all yearly budgets
         public async Task<List<YearlyBudgetResponseDto>> GetAllYearlyBudgets(Guid memberId)

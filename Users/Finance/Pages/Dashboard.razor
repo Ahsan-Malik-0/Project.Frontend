@@ -4,76 +4,75 @@
 
 @attribute [Authorize(Roles = "finance")]
 
-<div class="container-fluid px-4">
-    @if (isLoading)
-    {
-        <div class="text-center text-muted py-5">
-            <div class="spinner-border spinner-border-sm mb-2"></div>
-            <p class="mb-0">Loading requisitions...</p>
-        </div>
-    }
-    else if (requisitionDetails == null || requisitionDetails.Count == 0)
-    {
-        <div class="text-center text-muted py-5">
-            <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-            <p class="mb-0">No pending requisition requests found.</p>
-        </div>
-    }
-    else
-    {
-        <div class="row g-4">
-            @foreach (var req in requisitionDetails)
-            {
-                <div class="col-12 col-md-6 col-xl-4">
-                    <div class="card border shadow-sm h-100">
 
-                        <!-- Card Header -->
-                        <div class="card-header bg-white border-bottom d-flex align-items-center justify-content-between py-3">
-                            <span class="fw-semibold">@req.SocietyName</span>
-                        </div>
+<h4 class="fw-bold my-4">Pending Event Requisitions:</h4>
+@if (isLoading)
+{
+    <div class="text-center text-muted py-5">
+        <div class="spinner-border spinner-border-sm mb-2"></div>
+        <p class="mb-0">Loading requisitions...</p>
+    </div>
+}
+else if (requisitionDetails == null || requisitionDetails.Count == 0)
+{
+    <div class="text-center text-muted py-5">
+        <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+        <p class="mb-0">No pending requisition requests found.</p>
+    </div>
+}
+else
+{
+    <div class="row g-4">
+        @foreach (var req in requisitionDetails)
+        {
+            <div class="col-12 col-md-6 col-xl-4">
+                <div class="card border shadow-sm h-100">
 
-                        <!-- Card Body -->
-                        <div class="card-body">
-                            <p class="mb-2 small">
-                                <i class="bi bi-card-text me-1 text-muted"></i>
-                                <span class="text-muted">Society Name:</span>
-                                <span class="fw-semibold ms-1">@req.SocietyName</span>
-                            </p>
-                            <p class="mb-2 small">
-                                <i class="bi bi-card-text me-1 text-muted"></i>
-                                <span class="text-muted">Event Name:</span>
-                                <span class="fw-semibold ms-1">@req.EventName</span>
-                            </p>
-                            <p class="mb-2 small">
-                                <i class="bi bi-calendar-event me-1 text-muted"></i>
-                                <span class="text-muted">Event Date:</span>
-                                <span class="fw-semibold ms-1">@req.EventDate.ToString("dd MMM yyyy")</span>
-                            </p>
-                            <p class="mb-0 small">
-                                <i class="bi bi-currency-dollar me-1 text-muted"></i>
-                                <span class="text-muted">Alloted Budget:</span>
-                                <span class="fw-semibold text-primary ms-1">Rs @req.AllotedBudget.ToString("N0")</span>
-                            </p>
-                        </div>
+                    <!-- Card Header -->
+                    <div class="card-header bg-white border-bottom d-flex align-items-center justify-content-between py-3">
+                        <span class="fw-semibold">@req.SocietyName</span>
+                    </div>
 
-                        <!-- Card Footer -->
-                        <div class="card-footer bg-white border-top d-flex gap-2 py-3">
-                            <button class="btn btn-outline-success btn-sm w-50"
-                                    @onclick="() => OpenReleasedModal(req)">
-                                <i class="bi bi-check-circle me-1"></i> Release Budget
-                            </button>
-                            <button class="btn btn-outline-danger btn-sm w-50" 
-                                    @onclick="() => OpenRejectModal(req.RequisitionId)">
-                                <i class="bi bi-x-circle me-1"></i> Reject
-                            </button>
-                        </div>
+                    <!-- Card Body -->
+                    <div class="card-body">
+                        <p class="mb-2 small">
+                            <i class="bi bi-card-text me-1 text-muted"></i>
+                            <span class="text-muted">Society Name:</span>
+                            <span class="fw-semibold ms-1">@req.SocietyName</span>
+                        </p>
+                        <p class="mb-2 small">
+                            <i class="bi bi-card-text me-1 text-muted"></i>
+                            <span class="text-muted">Event Name:</span>
+                            <span class="fw-semibold ms-1">@req.EventName</span>
+                        </p>
+                        <p class="mb-2 small">
+                            <i class="bi bi-calendar-event me-1 text-muted"></i>
+                            <span class="text-muted">Event Date:</span>
+                            <span class="fw-semibold ms-1">@req.EventDate.ToString("dd MMM yyyy")</span>
+                        </p>
+                        <p class="mb-0 small">
+                            <i class="bi bi-currency-dollar me-1 text-muted"></i>
+                            <span class="text-muted">Alloted Budget:</span>
+                            <span class="fw-semibold text-primary ms-1">Rs @req.AllotedBudget.ToString("N0")</span>
+                        </p>
+                    </div>
+
+                    <!-- Card Footer -->
+                    <div class="card-footer bg-white border-top d-flex gap-2 py-3">
+                        <button class="btn btn-outline-success btn-sm w-50"
+                                @onclick="() => OpenReleasedModal(req)">
+                            <i class="bi bi-check-circle me-1"></i> Release Budget
+                        </button>
+                        <button class="btn btn-outline-danger btn-sm w-50" 
+                                @onclick="() => OpenRejectModal(req.RequisitionId)">
+                            <i class="bi bi-x-circle me-1"></i> Reject
+                        </button>
                     </div>
                 </div>
-            }
-        </div>
-    }
-</div>
-
+            </div>
+        }
+    </div>
+}
 
 <!-- ===== MODAL: Release Budget ===== -->
 @if (showReleasedModal)

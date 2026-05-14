@@ -4,109 +4,104 @@
 
 @attribute [Authorize(Roles = "admin")]
 
+<div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-4">
+    <h4 class="fw-bold mb-0">Pending Event Requisitions</h4>
 
-<div class="container-fluid px-4">
+    <div class="d-flex flex-wrap gap-2 align-items-end">
 
-    <div class="d-flex flex-wrap align-items-end justify-content-between gap-3 mb-4">
-        <h4 class="fw-bold mb-0">Pending Event Requisitions</h4>
-
-        <div class="d-flex flex-wrap gap-2 align-items-end">
-
-            <!-- Society Filter -->
-            <div>
-                <label class="form-label small fw-semibold mb-1">Society</label>
-                <select class="form-select form-select-sm" style="min-width: 160px;"
-                        @bind="filterSociety">
-                    <option value="">All Societies</option>
-                    @foreach (var name in requisitionRequestDetails.Select(r => r.SocietyName).Distinct())
-                    {
-                        <option value="@name">@name</option>
-                    }
-                </select>
-            </div>
-
+        <!-- Society Filter -->
+        <div>
+            <label class="form-label small fw-semibold mb-1">Society</label>
+            <select class="form-select form-select-sm" style="min-width: 160px;"
+                    @bind="filterSociety">
+                <option value="">All Societies</option>
+                @foreach (var name in requisitionRequestDetails.Select(r => r.SocietyName).Distinct())
+                {
+                    <option value="@name">@name</option>
+                }
+            </select>
         </div>
+
     </div>
-
-    @if (isLoading)
-    {
-        <div class="text-center text-muted py-5">
-            <div class="spinner-border spinner-border-sm mb-2"></div>
-            <p class="mb-0">Loading requisitions...</p>
-        </div>
-    }
-    else if (requisitionRequestDetails == null || requisitionRequestDetails.Count == 0)
-    {
-        <div class="text-center text-muted py-5">
-            <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-            <p class="mb-0">No pending requisition requests found.</p>
-        </div>
-    }
-    else
-    {
-        <div class="row g-4">
-            @foreach (var req in requisitionRequestDetails)
-            {
-                <div class="col-12 col-md-6 col-xl-4">
-                    <div class="card border shadow-sm h-100">
-
-                        <!-- Card Header -->
-                        <div class="card-header bg-white border-bottom d-flex align-items-center justify-content-between py-3">
-                            <span class="fw-semibold">@req.SocietyName</span>
-                        </div>
-
-                        <!-- Card Body -->
-                        <div class="card-body">
-                            <p class="mb-2 small">
-                                <i class="bi bi-card-text me-1 text-muted"></i>
-                                <span class="text-muted">Event Name:</span>
-                                <span class="fw-semibold ms-1">@req.EventName</span>
-                            </p>
-                            <p class="mb-2 small">
-                                <i class="bi bi-calendar-event me-1 text-muted"></i>
-                                <span class="text-muted">Event Date:</span>
-                                <span class="fw-semibold ms-1">@req.EventDate.ToString("dd MMM yyyy")</span>
-                            </p>
-                            <p class="mb-2 small">
-                                <i class="bi bi-send me-1 text-muted"></i>
-                                <span class="text-muted">Requested On:</span>
-                                <span class="fw-semibold ms-1">@req.RequestedDate.ToString("dd MMM yyyy")</span>
-                            </p>
-                            <p class="mb-2 small">
-                                <i class="bi bi-cash me-1 text-muted"></i>
-                                <span class="text-muted">Requested Amount:</span>
-                                <span class="fw-semibold ms-1">Rs @req.RequestedAmount.ToString("N0")</span>
-                            </p>
-                            <p class="mb-2 small">
-                                <i class="bi bi-cash me-1 text-muted"></i>
-                                <span class="text-muted">Requested Amount:</span>
-                                <span class="fw-semibold text-primary ms-1">Rs @req.AllotedAmount.ToString("N0")</span>
-                            </p>
-                        </div>
-
-                        <!-- Card Footer -->
-                        <div class="card-footer bg-white border-top d-flex gap-2 py-3">
-                            <button class="btn btn-outline-primary btn-sm flex-fill"
-                                    @onclick="() => OpenViewModal(req.Id)">
-                                <i class="bi bi-eye me-1"></i> View
-                            </button>
-                            <button class="btn btn-outline-success btn-sm flex-fill"
-                                    @onclick="() => HandleApprove(req.Id)">
-                                <i class="bi bi-check-circle me-1"></i> Approve
-                            </button>
-                            <button class="btn btn-outline-danger btn-sm flex-fill"
-                                    @onclick="() => OpenRejectModal(req.Id)">
-                                <i class="bi bi-x-circle me-1"></i> Reject
-                            </button>
-                        </div>
-
-                    </div>
-                </div>
-            }
-        </div>
-    }
-
 </div>
+
+@if (isLoading)
+{
+    <div class="text-center text-muted py-5">
+        <div class="spinner-border spinner-border-sm mb-2"></div>
+        <p class="mb-0">Loading requisitions...</p>
+    </div>
+}
+else if (requisitionRequestDetails == null || requisitionRequestDetails.Count == 0)
+{
+    <div class="text-center text-muted py-5">
+        <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+        <p class="mb-0">No pending requisition requests found.</p>
+    </div>
+}
+else
+{
+    <div class="row g-4">
+        @foreach (var req in requisitionRequestDetails)
+        {
+            <div class="col-12 col-md-6 col-xl-4">
+                <div class="card border shadow-sm h-100">
+
+                    <!-- Card Header -->
+                    <div class="card-header bg-white border-bottom d-flex align-items-center justify-content-between py-3">
+                        <span class="fw-semibold">@req.SocietyName</span>
+                    </div>
+
+                    <!-- Card Body -->
+                    <div class="card-body">
+                        <p class="mb-2 small">
+                            <i class="bi bi-card-text me-1 text-muted"></i>
+                            <span class="text-muted">Event Name:</span>
+                            <span class="fw-semibold ms-1">@req.EventName</span>
+                        </p>
+                        <p class="mb-2 small">
+                            <i class="bi bi-calendar-event me-1 text-muted"></i>
+                            <span class="text-muted">Event Date:</span>
+                            <span class="fw-semibold ms-1">@req.EventDate.ToString("dd MMM yyyy")</span>
+                        </p>
+                        <p class="mb-2 small">
+                            <i class="bi bi-send me-1 text-muted"></i>
+                            <span class="text-muted">Requested On:</span>
+                            <span class="fw-semibold ms-1">@req.RequestedDate.ToString("dd MMM yyyy")</span>
+                        </p>
+                        <p class="mb-2 small">
+                            <i class="bi bi-cash me-1 text-muted"></i>
+                            <span class="text-muted">Requested Amount:</span>
+                            <span class="fw-semibold ms-1">Rs @req.RequestedAmount.ToString("N0")</span>
+                        </p>
+                        <p class="mb-2 small">
+                            <i class="bi bi-cash me-1 text-muted"></i>
+                            <span class="text-muted">Requested Amount:</span>
+                            <span class="fw-semibold text-primary ms-1">Rs @req.AllotedAmount.ToString("N0")</span>
+                        </p>
+                    </div>
+
+                    <!-- Card Footer -->
+                    <div class="card-footer bg-white border-top d-flex gap-2 py-3">
+                        <button class="btn btn-outline-primary btn-sm flex-fill"
+                                @onclick="() => OpenViewModal(req.Id)">
+                            <i class="bi bi-eye me-1"></i> View
+                        </button>
+                        <button class="btn btn-outline-success btn-sm flex-fill"
+                                @onclick="() => HandleApprove(req.Id)">
+                            <i class="bi bi-check-circle me-1"></i> Approve
+                        </button>
+                        <button class="btn btn-outline-danger btn-sm flex-fill"
+                                @onclick="() => OpenRejectModal(req.Id)">
+                            <i class="bi bi-x-circle me-1"></i> Reject
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        }
+    </div>
+}
 
 <!-- ===== MODAL: View Requisition Details ===== -->
 @if (showViewModal)
