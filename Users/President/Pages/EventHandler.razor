@@ -146,7 +146,7 @@
                                 }
                             </div>
 
-                            <div class="w-100 mb-3">
+                            <div class="col-md-6 mb-3">
                                 <label class="form-label">Other Type</label>
                                 <input 
                                     disabled="@(main_type != "Other")" 
@@ -154,7 +154,6 @@
                                     type="text" 
                                     @bind="req_name" 
                                     placeholder="Type custom requirement..." />
-                                    />
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Qty</label>
@@ -163,8 +162,7 @@
                                     class="form-control" 
                                     @bind="req_qty" 
                                     min="1" 
-                                    disabled="@(main_type != "Other")"
-                                />
+                                    disabled="@(main_type != "Other")" />
                             </div>
                         </div>
                     }

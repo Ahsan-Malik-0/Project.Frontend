@@ -37,11 +37,6 @@ else
                     <div class="card-body">
                         <p class="mb-2 small">
                             <i class="bi bi-card-text me-1 text-muted"></i>
-                            <span class="text-muted">Society Name:</span>
-                            <span class="fw-semibold ms-1">@req.SocietyName</span>
-                        </p>
-                        <p class="mb-2 small">
-                            <i class="bi bi-card-text me-1 text-muted"></i>
                             <span class="text-muted">Event Name:</span>
                             <span class="fw-semibold ms-1">@req.EventName</span>
                         </p>
@@ -50,10 +45,20 @@ else
                             <span class="text-muted">Event Date:</span>
                             <span class="fw-semibold ms-1">@req.EventDate.ToString("dd MMM yyyy")</span>
                         </p>
-                        <p class="mb-0 small">
-                            <i class="bi bi-currency-dollar me-1 text-muted"></i>
+                        <p class="mb-2 small">
+                            <i class="bi bi-cash-coin me-1 text-muted"></i>
                             <span class="text-muted">Alloted Budget:</span>
                             <span class="fw-semibold text-primary ms-1">Rs @req.AllotedBudget.ToString("N0")</span>
+                        </p>
+                        <p class="mb-2 small">
+                            <i class="bi bi-cash-coin me-1 text-muted"></i>
+                            <span class="text-muted">BIIT Contribution:</span>
+                            <span class="fw-semibold text-primary ms-1">Rs @req.BiitContribution.ToString("N0")</span>
+                        </p>
+                        <p class="mb-2 small">
+                            <i class="bi bi-cash-coin me-1 text-muted"></i>
+                            <span class="text-muted">Total:</span>
+                            <span class="fw-semibold text-success ms-1">Rs @((req.AllotedBudget + req.BiitContribution).ToString("N0"))</span>
                         </p>
                     </div>
 

@@ -117,6 +117,28 @@ namespace Project.Frontend.StudentAffairsServices
             }
         }
 
+        public async Task<ResponseResult> MarkEventAsCompleted(Guid requisitionId)
+        {
+            try
+            {
+                var response = await httpClient.GetAsync($"StudentAffairs/MarkEventAsCompleted/{requisitionId}");
+                if (!response.IsSuccessStatusCode)
+                {
+                    var resString = await response.Content.ReadAsStringAsync();
+                    var jsonNode = JsonNode.Parse(resString);
+                    var error = jsonNode?["errors"]?.ToString() ?? string.Empty;
+
+                    return new ResponseResult() { Success = false, Error = error };
+                }
+
+                return new ResponseResult() { Success = true };
+            }
+            catch (Exception ex)
+            {
+                return new ResponseResult() { Success = false, Error = ex.Message };
+            }
+        }
+
 
         // Profile Details
         public async Task<MemberProfileDto?> GetProfile(Guid memberId)

@@ -1,103 +1,94 @@
-@page "/chairperson/history"
-@layout ChairpersonLayout
-@attribute [Authorize(Roles = "chairperson")]
+@page "/finance/history"
 
-<div class="container-fluid px-4 py-4">
+@layout FinanceLayout
+@attribute [Authorize(Roles = "finance")]
 
-    <h4 class="fw-bold mb-4">Requisition History</h4>
+@if (loading)
+{
+    <div class="text-center py-5">
+        <div class="spinner-border text-primary"></div>
+        <p class="mt-3 text-muted">Loading Requisitions...</p>
+    </div>
+}
+else if (requisitionHistory.Count == 0)
+{
+    <div class="text-center py-5">
+        <p class="text-muted fs-5">No approved requisitions available</p>
+    </div>
+}
+else
+{
+    <h4 class="fw-bold mb-3">Approved Requisitions:</h4>
+    <div class="row g-4">
+        @foreach (var ph in requisitionHistory)
+        {
+            <div class="col-lg-4 col-md-6">
+                <div class="card h-100 shadow-sm border">
 
-    @if (isLoading)
-    {
-        <div class="text-center text-muted py-5">
-            <div class="spinner-border spinner-border-sm mb-2"></div>
-            <p class="mb-0">Loading history...</p>
-        </div>
-    }
-    else if (history == null || history.Count == 0)
-    {
-        <div class="text-center text-muted py-5">
-            <i class="bi bi-clock-history fs-1 d-block mb-2"></i>
-            <p class="mb-0">No completed requisitions found.</p>
-        </div>
-    }
-    else
-    {
-        <div class="row g-4">
-            @foreach (var item in history)
-            {
-                <div class="col-12 col-md-6 col-xl-4">
-                    <div class="card border shadow-sm h-100">
-                        <!-- Header -->
-                        <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between gap-2 align-items-center">
-                            <h6 class="fw-bold mb-0">@item.EventName</h6>
-                            @if(@item.RequisitionStatus.Contains("Request", StringComparison.OrdinalIgnoreCase))
-                            {
-                                <span class="badge bg-danger small mt-1">Request For Audit</span>
-                            }
-                            else if(@item.RequisitionStatus == "Cleared")
-                            {
-                                <span class="badge bg-success small mt-1">Audit Cleared</span>
-                            }
+                    <!-- Header -->
+                    <div class="card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="fw-bold mb-0">@ph.SocietyName</h6>
                         </div>
-
-                        <!-- Stats Body -->
-                        <div class="card-body">
-
-                            <div class="row g-2 mb-3">
-                                <div class="col-6">
-                                    <div class="bg-light rounded p-2 text-center">
-                                        <div class="text-muted small" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;">Requested</div>
-                                        <div class="fw-bold text-primary small">Rs @item.RequestedAmount.ToString("N0")</div>
-                                    </div>
-                                </div>
-                                <div class="col-6">
-                                    <div class="bg-light rounded p-2 text-center">
-                                        <div class="text-muted small" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;">Allocated</div>
-                                        <div class="fw-bold text-success small">Rs @item.AllocatedAmount.ToString("N0")</div>
-                                    </div>
-                                </div>
-                                <div class="col-6">
-                                    <div class="bg-light rounded p-2 text-center">
-                                        <div class="text-muted small" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;">BIIT Share</div>
-                                        <div class="fw-bold text-warning small">Rs @item.BiitContribution.ToString("N0")</div>
-                                    </div>
-                                </div>
-                                <div class="col-6">
-                                    <div class="bg-light rounded p-2 text-center">
-                                        <div class="text-muted small" style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.05em;">Allocated On</div>
-                                        <div class="fw-bold small">@item.AllocatedDate.ToString("dd MMM yyyy")</div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <p class="mb-0 text-muted small">
-                                <i class="bi bi-send me-1"></i>
-                                Requested on @item.RequestedDate.ToString("dd MMM yyyy")
-                            </p>
-                        </div>
-
-                        <!-- Footer -->
-                        <div class="card-footer bg-white border-top d-flex gap-2 py-3">
-                            <button class="btn btn-outline-primary btn-sm flex-fill"
-                                    @onclick="() => OpenViewModal(item.RequisitionId)">
-                                <i class="bi bi-eye me-1"></i> View Requisition
-                            </button>
-                            <button class="btn btn-outline-secondary btn-sm flex-fill"
-                                    @onclick="() => OpenAuditModal(item)">
-                                <i class="bi bi-journal-text me-1"></i> Audit
-                            </button>
-                        </div>
-
                     </div>
+
+                    <!-- Body -->
+                    <!-- Fix 1: card-body and card-footer are now properly separated -->
+                    <div class="card-body">
+                        <p class="text-muted small mb-2">
+                            <strong>Event:</strong> @ph.EventName
+                        </p>
+                        <p class="text-muted small mb-2">
+                            <strong>Chairperson:</strong> @(ph.ChairpersonName ?? "—")
+                        </p>
+                        <p class="text-muted small mb-2">
+                            <strong>Event Date:</strong> @ph.EventDate.ToString("dd MMM yyyy")
+                        </p>
+                        <p class="text-muted small mb-2">
+                            <strong>Alloted Budget:</strong>
+                            <span class="fw-semibold text-primary">Rs @ph.AllotedBudget.ToString("N0")</span>
+                        </p>
+                        <p class="mb-2 small">
+                            <strong class="text-muted">BIIT Contribution:</strong>
+                            <span class="fw-semibold text-primary ms-1">Rs @ph.BiitContribution.ToString("N0")</span>
+                        </p>
+                        <p class="mb-2 small">
+                            <strong class="text-muted">Total:</strong>
+                            <span class="fw-semibold text-success ms-1">Rs @((ph.AllotedBudget + ph.BiitContribution).ToString("N0"))</span>
+                        </p>
+                        <p class="text-muted small mb-0">
+                            <strong>Event Status:</strong>
+                            @if (ph.Status.Contains("Released", StringComparison.CurrentCultureIgnoreCase))
+                            {
+                                <strong class="ms-1 @GetStatusTextClass(ph.Status)">Not Completed Yet</strong>
+                            }
+                            else
+                            {
+                                <strong class="ms-1 @GetStatusTextClass(ph.Status)">@ph.Status </strong>
+                            }
+                        </p>
+                    </div>
+
+                    <!-- Fix 1: card-footer is now outside card-body -->
+                    <div class="card-footer bg-white border-top d-flex gap-2 py-3">
+                        @* <button class="btn btn-outline-primary btn-sm flex-fill"
+                                @onclick="() => OpenViewModal(ph.RequisitionId)">
+                            <i class="bi bi-eye me-1"></i> View Requisition
+                        </button> *@
+                        <button class="btn btn-outline-secondary btn-sm flex-fill"
+                                @onclick="() => OpenAuditModal(ph)">
+                            <i class="bi bi-journal-text me-1"></i> View Audit
+                        </button>
+                    </div>
+
                 </div>
-            }
-        </div>
-    }
+            </div>
+        }
+    </div>
+}
 
-</div>
 
-
-<!-- ===== MODAL: View Requisition ===== -->
+@* <!-- ===== MODAL: View Requisition ===== -->
 @if (showViewModal)
 {
     <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.5)">
@@ -107,7 +98,7 @@
                     <h6 class="modal-title fw-bold">Requisition Details</h6>
                     <button class="btn-close" @onclick="CloseAllModals"></button>
                 </div>
-                <div class="modal-body p-5">
+                <div class="modal-body p-4">
 
                     @if (isLoadingDetails)
                     {
@@ -116,38 +107,34 @@
                             <p class="mb-0 text-muted">Loading details...</p>
                         </div>
                     }
-                    else if (selectedRequisition == null)
+                    else if (singleRequisitionDetails == null)
                     {
                         <p class="text-center text-muted">No details available.</p>
                     }
                     else
                     {
-                        <!-- Header -->
                         <div class="d-flex align-items-center gap-4 border-bottom pb-3 mb-4">
-                            <img src="/images/biit_logo.png" alt="BIIT Logo" style="max-width:80px;" />
+                            <img src="/images/biit_logo.png" alt="BIIT Logo" style="max-width:70px;" />
                             <div>
-                                <h4 class="fw-bold mb-0">Barani Institute Of Information Technology</h4>
+                                <h5 class="fw-bold mb-0">Barani Institute Of Information Technology</h5>
                                 <small class="text-muted">Official Event Requisition Application</small>
                             </div>
                         </div>
 
-                        <!-- Subject + Dates -->
                         <div class="mb-4">
-                            <p class="mb-1"><strong>Subject:</strong> @selectedRequisition.Subject</p>
-                            <p class="mb-1"><strong>Requested Date:</strong> @selectedRequisition.RequestedDate.ToString("dd MMM yyyy")</p>
-                            <p class="mb-0"><strong>Event Date:</strong> @selectedRequisition.EventDate.ToString("dd MMM yyyy")</p>
+                            <p class="mb-1"><strong>Subject:</strong> @singleRequisitionDetails.Subject</p>
+                            <p class="mb-1"><strong>Requested Date:</strong> @singleRequisitionDetails.RequestedDate.ToString("dd MMM yyyy")</p>
+                            <p class="mb-0"><strong>Event Date:</strong> @singleRequisitionDetails.EventDate.ToString("dd MMM yyyy")</p>
                         </div>
 
-                        <!-- Body -->
                         <div class="mb-4">
                             <p>Respected Sir,</p>
-                            <p style="white-space:pre-line;">@selectedRequisition.Body</p>
+                            <p style="white-space:pre-line;">@singleRequisitionDetails.Body</p>
                         </div>
 
-                        <!-- Requirements -->
-                        @if (selectedRequisition.EventRequirements != null && selectedRequisition.EventRequirements.Any())
+                        @if (singleRequisitionDetails.EventRequirements != null && singleRequisitionDetails.EventRequirements.Any())
                         {
-                            <strong>@selectedRequisition.SocietyName Society need the following:</strong>
+                            <strong>@singleRequisitionDetails.SocietyName Society need the following:</strong>
                             <div class="table-responsive mb-4 mt-2">
                                 <table class="table table-bordered align-middle">
                                     <thead class="table-light text-center">
@@ -160,14 +147,14 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach (var req in selectedRequisition.EventRequirements)
+                                        @foreach (var r in singleRequisitionDetails.EventRequirements)
                                         {
                                             <tr>
-                                                <td>@req.Type</td>
-                                                <td>@req.Name</td>
-                                                <td class="text-center">@req.Quantity</td>
-                                                <td class="text-end">@req.Price.ToString("N2")</td>
-                                                <td class="text-end fw-semibold">@((req.Quantity * req.Price).ToString("N2"))</td>
+                                                <td>@r.Type</td>
+                                                <td>@r.Name</td>
+                                                <td class="text-center">@r.Quantity</td>
+                                                <td class="text-end">@r.Price.ToString("N2")</td>
+                                                <td class="text-end fw-semibold">@((r.Quantity * r.Price).ToString("N2"))</td>
                                             </tr>
                                         }
                                     </tbody>
@@ -175,7 +162,7 @@
                                         <tr>
                                             <td colspan="4" class="text-end fw-bold">Total Requested Amount:</td>
                                             <td class="text-end fw-bold text-primary">
-                                                @selectedRequisition.EventRequirements.Sum(r => r.Quantity * r.Price).ToString("N2")
+                                                @singleRequisitionDetails.EventRequirements.Sum(r => r.Quantity * r.Price).ToString("N2")
                                             </td>
                                         </tr>
                                     </tfoot>
@@ -187,10 +174,9 @@
                             <p class="text-center text-muted">No requirements added for this event.</p>
                         }
 
-                        <!-- Signature -->
                         <div class="mt-5 pt-4 border-top">
-                            <p class="mb-1 fw-semibold">@selectedRequisition.ChairpersonName</p>
-                            <p class="mb-4 text-muted">Chairperson (@selectedRequisition.SocietyName)</p>
+                            <p class="mb-1 fw-semibold">@singleRequisitionDetails.ChairpersonName</p>
+                            <p class="mb-4 text-muted">Chairperson (@singleRequisitionDetails.SocietyName)</p>
                             <p class="mb-1 fw-semibold">Mr. Shahid Rashid</p>
                             <p class="text-muted">Assistant Director Student Affairs</p>
                         </div>
@@ -203,7 +189,7 @@
             </div>
         </div>
     </div>
-}
+} *@
 
 
 <!-- ===== MODAL: Audit ===== -->
@@ -228,32 +214,63 @@
                             <p class="mb-0 text-muted">Loading audit...</p>
                         </div>
                     }
-                    @* else if (activeAudit == null) *@
                     else if (activeAudit == null)
                     {
-                        <!-- No audit exists -->
                         <div class="text-center py-5">
                             <i class="bi bi-journal-x fs-1 text-muted d-block mb-3"></i>
-                            <p class="text-muted mb-0">Audit does not exist for this event.</p>
-                            <p class="text-muted small">Upload an audit report to track how the budget was spent.</p>
+                            <p class="text-muted mb-2">Audit does not exist for this event.</p>
+
+                            <!-- Fix 2: removed stray before variable inside -->
+                            @if (activeEventStatus.Contains("Completed", StringComparison.OrdinalIgnoreCase))
+                            {
+                                <p class="text-muted small mb-3">
+                                    The event is completed but no audit has been uploaded yet.
+                                </p>
+                                <button class="btn btn-outline-primary btn-sm px-4"
+                                        @onclick="() => HandleAuditRequest(activeRequisitionId)">
+                                    <i class="bi bi-bell me-1"></i> Ask for Audit
+                                </button>
+                            }
+                            else if (activeEventStatus.Contains("Request", StringComparison.OrdinalIgnoreCase))
+                            {
+                                <p class="text-danger small mb-3">
+                                    <i class="bi bi-exclamation-triangle me-1"></i>
+                                    The chairperson has been requested for an audit but has not uploaded it yet.
+                                </p>
+                            }
                         </div>
                     }
                     else
                     {
-                        <!-- Status Badge — prominent at top -->
+                        <!-- Status Badge -->
                         <div class="text-center mb-4">
                             <span class="badge fs-6 px-4 py-2 @GetStatusBadgeClass(activeAudit.Status)">
                                 <i class="bi @GetStatusIcon(activeAudit.Status) me-2"></i>
-                                @activeAudit.Status
+                                <!-- Fix 3: removed stray before variables inside -->
+                                @if (activeAudit.Status == "give")
+                                {
+                                    <span>Collect</span>
+                                }
+                                else if (activeAudit.Status == "take")
+                                {
+                                    <span>Return</span>
+                                }
+                                else
+                                {
+                                    <span>@activeAudit.Status</span>
+                                }
                             </span>
 
-                            @if (activeAudit.Status == "take")
+                            @if (activeAudit.Status == "give")
                             {
                                 <div class="mt-3">
                                     <p class="text-danger small mb-2">
                                         <i class="bi bi-exclamation-circle me-1"></i>
-                                        You need to collect <strong>Rs @((activeAudit.SpendAmount - activeAudit.FundProvided).ToString("N0"))</strong> from the account office.
+                                        <!-- Fix 4: removed double on variable inside -->
+                                        Collect <strong>Rs @((activeAudit.SpendAmount - activeAudit.FundProvided).ToString("N0"))</strong>
+                                        from @(activeChairpersonName ?? "the Chairperson").
                                     </p>
+                                    <!-- Fix 5: spinner now conditional, Fix 6: isActing added -->
                                     <button class="btn btn-success btn-sm px-4"
                                             disabled="@isActing"
                                             @onclick="VerifyTakeAmount">
@@ -261,16 +278,17 @@
                                         {
                                             <span class="spinner-border spinner-border-sm me-1"></span>
                                         }
-                                        <i class="bi bi-check-circle me-1"></i> Verify — Amount Taken
+                                        <i class="bi bi-check-circle me-1"></i> Verify — Amount Collected
                                     </button>
                                 </div>
                             }
-                            else if (activeAudit.Status == "give")
+                            else if (activeAudit.Status == "take")
                             {
                                 <div class="alert alert-warning mt-3 py-2 small text-start">
                                     <i class="bi bi-exclamation-triangle me-1"></i>
-                                    You have <strong>Rs @((activeAudit.FundProvided - activeAudit.SpendAmount).ToString("N0"))</strong> remaining.
-                                    Please return the extra amount to the account office as soon as possible.
+                                    <!-- Fix 4: removed double -->
+                                    Return <strong>Rs @((activeAudit.FundProvided - activeAudit.SpendAmount).ToString("N0"))</strong>
+                                    to @(activeChairpersonName ?? "the Chairperson") as soon as possible.
                                 </div>
                             }
                         </div>
@@ -348,31 +366,6 @@
                 </div>
 
                 <div class="modal-footer border-top">
-                    @* @if (activeAudit == null && !isLoadingAudit) *@
-                    @if (activeAudit == null && !isLoadingAudit)
-                    {
-                        <!-- No audit — show create button -->
-                        <a class="btn btn-primary btn-sm px-4"
-                           href="/chairperson/handle-audit?eventId=@activeEventId&AllotedAmount=@activeAllotedAmount">
-                            <i class="bi bi-plus-circle me-1"></i> Create Audit
-                        </a>
-                    }
-                    else if (activeAudit != null)
-                    {
-                        bool isClear = activeAudit.Status == "clear";
-
-                        <button class="btn btn-outline-danger btn-sm"
-                                disabled="@(isClear || isActing)"
-                                @onclick="DeleteAudit">
-                            <i class="bi bi-trash me-1"></i> Delete
-                        </button>
-
-                        <a class="btn btn-outline-warning btn-sm @(isClear ? "disabled" : "")"
-                           href="/chairperson/handle-audit?eventId=@activeEventId&auditId=@activeAudit.Id">
-                            <i class="bi bi-pencil me-1"></i> Update
-                        </a>
-                    }
-
                     <button class="btn btn-secondary btn-sm" @onclick="CloseAllModals">Close</button>
                 </div>
 
@@ -382,59 +375,61 @@
 }
 
 
-@inject ChairpersonServices chairpersonServices
-@inject ClaimServices claimServices
+@inject FinanceServices financeServices
 @inject IJSRuntime JS
 
 @code {
-    private bool isLoading = false;
-    private bool isLoadingDetails = false;
+    private bool loading = false;
     private bool isLoadingAudit = false;
+    private bool isLoadingDetails = false;
     private bool isActing = false;
 
-    private List<EventRequisitionHistoryDto> history = new();
-    private EventRequisitionDetailsDto? selectedRequisition;
-    private EventAudit? activeAudit;
+    // Fix 7: initialize to new() to avoid NullReferenceException on .Count
+    private List<ViewRequisitionDetailsForFinanceHistoryDto> requisitionHistory = new();
+    private EventRequisitionDetailsDto? singleRequisitionDetails;
 
-    // ── Modal flags ──────────────────────────────────────────
-    private bool showViewModal = false;
+    // ── Modal flags ───────────────────────────────────────────
     private bool showAuditModal = false;
+    private bool showViewModal = false;
 
-    // ── Active selection ─────────────────────────────────────
+    // ── Active selection ──────────────────────────────────────
     private Guid activeRequisitionId;
     private Guid activeEventId;
-    private string activeAllotedAmount = "";
     private string activeEventName = "";
+    private string activeChairpersonName = "";
+    private string activeEventStatus = "";
+    private EventAudit? activeAudit;
 
-    // ── Init ─────────────────────────────────────────────────
+    // ── Init ──────────────────────────────────────────────────
     protected override async Task OnInitializedAsync()
     {
-        isLoading = true;
+        loading = true;
         try
         {
-            var claims = await claimServices.GetClaims();
-            history = await chairpersonServices.GetRequisitionHistory(Guid.Parse(claims.Id)) ?? new();
+            // Fix 8: removed unused claimServices call — finance history is not filtered by user
+            var response = await financeServices.GetRequisitionHistory();
+            requisitionHistory = response?.ToList() ?? new();
         }
-        catch (Exception ex)
+        catch
         {
-            Console.WriteLine($"Error loading history: {ex.Message}");
+            await JS.InvokeVoidAsync("alert", "Something went wrong.");
         }
         finally
         {
-            isLoading = false;
+            loading = false;
         }
     }
 
-    // ── Modal Openers ────────────────────────────────────────
-    private async Task OpenViewModal(Guid requisitionId)
+    // ── Modal Openers ─────────────────────────────────────────
+    @* private async Task OpenViewModal(Guid requisitionId)
     {
-        selectedRequisition = null;
+        singleRequisitionDetails = null;
         showViewModal = true;
         isLoadingDetails = true;
 
         try
         {
-            selectedRequisition = await chairpersonServices.GetRequisitionDetails(requisitionId);
+            singleRequisitionDetails = await financeServices.GetRequisitionHistory(requisitionId);
         }
         catch (Exception ex)
         {
@@ -444,21 +439,22 @@
         {
             isLoadingDetails = false;
         }
-    }
+    } *@
 
-    private async Task OpenAuditModal(EventRequisitionHistoryDto item)
+    private async Task OpenAuditModal(ViewRequisitionDetailsForFinanceHistoryDto item)
     {
         activeRequisitionId = item.RequisitionId;
         activeEventId = item.EventId;
-        activeAllotedAmount = (item.AllocatedAmount + item.BiitContribution).ToString("F2");
         activeEventName = item.EventName;
+        activeChairpersonName = item.ChairpersonName ?? "";
+        activeEventStatus = item.Status;
         activeAudit = null;
         showAuditModal = true;
         isLoadingAudit = true;
 
         try
         {
-            activeAudit = await chairpersonServices.GetEventAudit(item.EventId);
+            activeAudit = await financeServices.GetEventAudit(item.EventId);
         }
         catch (Exception ex)
         {
@@ -472,29 +468,31 @@
 
     private void CloseAllModals()
     {
-        showViewModal = false;
         showAuditModal = false;
-        selectedRequisition = null;
+        showViewModal = false;
+        singleRequisitionDetails = null;
         activeAudit = null;
     }
 
-    // ── Audit Actions ────────────────────────────────────────
+    // ── Audit Actions ─────────────────────────────────────────
     private async Task VerifyTakeAmount()
     {
         if (activeAudit == null) return;
 
-        bool confirm = await JS.InvokeAsync<bool>("confirm", "Confirm that you have received the amount from the account office?");
+        bool confirm = await JS.InvokeAsync<bool>("confirm", "Confirm that you have collected the amount from the chairperson?");
         if (!confirm) return;
 
+        // Fix 6: isActing properly set to show spinner and disable button
         isActing = true;
         try
         {
-            var response = await chairpersonServices.VerifyTakeAmount(activeAudit.Id);
-            @* var response = true; // Simulate success response for now *@
+            var response = await financeServices.VerifyTakeAmount(activeAudit.Id);
             if (response.Success)
             {
                 activeAudit.Status = "clear";
                 await JS.InvokeVoidAsync("alert", "Status updated to Clear.");
+
+                await OnInitializedAsync(); // Refresh the history to update the status of the event
             }
             else
             {
@@ -511,51 +509,56 @@
         }
     }
 
-    private async Task DeleteAudit()
+    private async Task HandleAuditRequest(Guid requisitionId)
     {
-        if (activeAudit == null) return;
-
-        bool confirm = await JS.InvokeAsync<bool>("confirm", "Are you sure you want to delete this audit?");
+        bool confirm = await JS.InvokeAsync<bool>("confirm", "Send an audit request to the chairperson for this event?");
         if (!confirm) return;
 
-        isActing = true;
         try
         {
-            var response = await chairpersonServices.DeleteEventAudit(activeAudit.Id);
-            if (response?.Success == true)
+            var response = await financeServices.RequestAudit(requisitionId);
+            if (response.Success)
             {
-                activeAudit = null;
-                await JS.InvokeVoidAsync("alert", "Audit deleted successfully.");
+                await JS.InvokeVoidAsync("alert", "Audit request sent successfully.");
+                showAuditModal = false;
+
+                await OnInitializedAsync(); // Refresh the history to update the status of the event
             }
             else
             {
-                await JS.InvokeVoidAsync("alert", $"Failed to delete: {response?.Error}");
+                await JS.InvokeVoidAsync("alert", $"Failed to send request: {response?.Error}");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error deleting audit: {ex.Message}");
-        }
-        finally
-        {
-            isActing = false;
+            Console.WriteLine($"Error requesting audit: {ex.Message}");
+            await JS.InvokeVoidAsync("alert", "An error occurred while sending the request.");
         }
     }
 
-    // ── Helpers ──────────────────────────────────────────────
+    // ── Helpers ───────────────────────────────────────────────
+    private string GetStatusTextClass(string status) => status switch
+    {
+        var s when s.Contains("Released", StringComparison.OrdinalIgnoreCase)  => "text-dark",
+        var s when s.Contains("Completed", StringComparison.OrdinalIgnoreCase) => "text-dark",
+        var s when s.Contains("Request", StringComparison.OrdinalIgnoreCase) => "text-warning",
+        var s when s.Contains("Cleared", StringComparison.OrdinalIgnoreCase) => "text-success",
+        _ => "text-dark"
+    };
+
     private string GetStatusBadgeClass(string? status) => status switch
     {
         "clear" => "bg-success",
-        "take"  => "bg-danger",
-        "give"  => "bg-warning text-dark",
+        "give"  => "bg-danger",
+        "take"  => "bg-warning text-dark",
         _       => "bg-secondary"
     };
 
     private string GetStatusIcon(string? status) => status switch
     {
         "clear" => "bi-check-circle-fill",
-        "take"  => "bi-arrow-down-circle-fill",
-        "give"  => "bi-arrow-up-circle-fill",
+        "give"  => "bi-arrow-down-circle-fill",
+        "take"  => "bi-arrow-up-circle-fill",
         _       => "bi-question-circle"
     };
 }

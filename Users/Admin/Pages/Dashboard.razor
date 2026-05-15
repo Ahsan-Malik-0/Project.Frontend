@@ -8,8 +8,6 @@
     <h4 class="fw-bold mb-0">Pending Event Requisitions</h4>
 
     <div class="d-flex flex-wrap gap-2 align-items-end">
-
-        <!-- Society Filter -->
         <div>
             <label class="form-label small fw-semibold mb-1">Society</label>
             <select class="form-select form-select-sm" style="min-width: 160px;"
@@ -21,7 +19,6 @@
                 }
             </select>
         </div>
-
     </div>
 </div>
 
@@ -42,7 +39,7 @@ else if (requisitionRequestDetails == null || requisitionRequestDetails.Count ==
 else
 {
     <div class="row g-4">
-        @foreach (var req in requisitionRequestDetails)
+        @foreach (var req in FilteredRequisitions)
         {
             <div class="col-12 col-md-6 col-xl-4">
                 <div class="card border shadow-sm h-100">
@@ -50,6 +47,11 @@ else
                     <!-- Card Header -->
                     <div class="card-header bg-white border-bottom d-flex align-items-center justify-content-between py-3">
                         <span class="fw-semibold">@req.SocietyName</span>
+                        <button class="btn btn-sm btn-outline-secondary"
+                                title="Check Non-Financial Conflicts"
+                                @onclick="() => OpenConflictModal(req)">
+                            <i class="bi bi-exclamation-triangle me-1"></i> Conflicts
+                        </button>
                     </div>
 
                     <!-- Card Body -->
@@ -76,8 +78,8 @@ else
                         </p>
                         <p class="mb-2 small">
                             <i class="bi bi-cash me-1 text-muted"></i>
-                            <span class="text-muted">Requested Amount:</span>
-                            <span class="fw-semibold text-primary ms-1">Rs @req.AllotedAmount.ToString("N0")</span>
+                            <span class="text-muted">Alloted Amount:</span>
+                            <span class="fw-semibold text-primary ms-1">Rs @((req.AllotedAmount + req.BiitContribution).ToString("N0"))</span>
                         </p>
                     </div>
 
@@ -103,11 +105,12 @@ else
     </div>
 }
 
+
 <!-- ===== MODAL: View Requisition Details ===== -->
 @if (showViewModal)
 {
     <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.5)">
-        <div class="modal-dialog modal-dialog-centered model-lg modal-dialog-scrollable">
+        <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
             <div class="modal-content border shadow">
                 <div class="modal-header border-bottom">
                     <h6 class="modal-title fw-bold">Requisition Details</h6>
@@ -128,9 +131,6 @@ else
                     }
                     else
                     {
-                        <!-- Application Form (matches reference style) -->
-
-                        <!-- Header -->
                         <div class="d-flex align-items-center gap-4 border-bottom pb-3 mb-4">
                             <img src="/images/biit_logo.png" alt="BIIT Logo" style="max-width:70px;" />
                             <div>
@@ -139,26 +139,17 @@ else
                             </div>
                         </div>
 
-                        <!-- Subject + Dates -->
                         <div class="mb-4">
-                            <p class="mb-1">
-                                <strong>Subject:</strong> @singleRequisitionDetails.Subject
-                            </p>
-                            <p class="mb-1">
-                                <strong>Requested Date:</strong> @singleRequisitionDetails.RequestedDate.ToString("dd MMM yyyy")
-                            </p>
-                            <p class="mb-0">
-                                <strong>Event Date:</strong> @singleRequisitionDetails.EventDate.ToString("dd MMM yyyy")
-                            </p>
+                            <p class="mb-1"><strong>Subject:</strong> @singleRequisitionDetails.Subject</p>
+                            <p class="mb-1"><strong>Requested Date:</strong> @singleRequisitionDetails.RequestedDate.ToString("dd MMM yyyy")</p>
+                            <p class="mb-0"><strong>Event Date:</strong> @singleRequisitionDetails.EventDate.ToString("dd MMM yyyy")</p>
                         </div>
 
-                        <!-- Body -->
                         <div class="mb-4">
                             <p>Respected Sir,</p>
                             <p style="white-space: pre-line;">@singleRequisitionDetails.Body</p>
                         </div>
 
-                        <!-- Requirements Table -->
                         @if (singleRequisitionDetails.EventRequirements != null && singleRequisitionDetails.EventRequirements.Any())
                         {
                             <strong>@singleRequisitionDetails.SocietyName Society need the following:</strong>
@@ -201,7 +192,6 @@ else
                             <p class="text-center text-muted">No requirements added for this event.</p>
                         }
 
-                        <!-- Signature -->
                         <div class="mt-5 pt-4 border-top">
                             <p class="mb-1 fw-semibold">@singleRequisitionDetails.ChairpersonName</p>
                             <p class="mb-4 text-muted">Chairperson (@singleRequisitionDetails.SocietyName)</p>
@@ -262,32 +252,202 @@ else
 }
 
 
+<!-- ===== MODAL: Non-Financial Conflict Check ===== -->
+@if (showConflictModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.5)">
+        <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow">
+
+                <div class="modal-header border-bottom">
+                    <h6 class="modal-title fw-bold">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        Non-Financial Conflict Check — @conflictEventName
+                    </h6>
+                    <button class="btn-close" @onclick="CloseAllModals"></button>
+                </div>
+
+                <div class="modal-body">
+
+                    @if (isLoadingConflict)
+                    {
+                        <div class="text-center text-muted py-4">
+                            <div class="spinner-border spinner-border-sm mb-2"></div>
+                            <p class="mb-0">Checking conflicts...</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <!-- Conflict Status Banner -->
+                        @if (conflictedNames.Count > 0)
+                        {
+                            <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mb-4">
+                                <i class="bi bi-x-octagon-fill fs-5"></i>
+                                <span>
+                                    <strong>Conflict detected!</strong>
+                                    Some non-financial requirements of this event are already reserved by other events.
+                                </span>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-success d-flex align-items-center gap-2 py-2 mb-4">
+                                <i class="bi bi-check-circle-fill fs-5"></i>
+                                <span><strong>No conflict.</strong> All non-financial requirements are available.</span>
+                            </div>
+                        }
+
+                        <!-- Current Event Non-Financial Requirements -->
+                        <h6 class="fw-semibold mb-2">
+                            Current Event Non-Financial Requirements
+                        </h6>
+
+                        @if (!currentNonFinancial.Any())
+                        {
+                            <p class="text-muted small mb-4">This event has no non-financial requirements.</p>
+                        }
+                        else
+                        {
+                            <div class="table-responsive mb-4">
+                                <table class="table table-bordered table-sm align-middle">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th class="small">#</th>
+                                            <th class="small">Requirement</th>
+                                            <th class="small text-center">Qty</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @{ int i = 1; }
+                                        @foreach (var r in currentNonFinancial)
+                                        {
+                                            bool isConflict = conflictedNames.Contains(r.Name.ToLower());
+                                            <tr class="@(isConflict ? "table-danger" : "")">
+                                                <td class="text-muted">@i</td>
+                                                <td>
+                                                    @r.Name
+                                                    @if (isConflict)
+                                                    {
+                                                        <span class="badge bg-danger ms-2 small">Reserved</span>
+                                                    }
+                                                </td>
+                                                <td class="text-center">@r.Quantity</td>
+                                            </tr>
+                                            i++;
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+
+                        <!-- Reserved Non-Financial Requirements -->
+                        <h6 class="fw-semibold mb-2">
+                            Currently Reserved Non-Financial Requirements
+                        </h6>
+
+                        @if (!reservedNonFinancialRequirements.Any())
+                        {
+                            <p class="text-muted small">No non-financial requirements are currently reserved.</p>
+                        }
+                        else
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-sm align-middle">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th class="small">Event</th>
+                                            <th class="small">Event Date</th>
+                                            <th class="small">Requirement</th>
+                                            <th class="small text-center">Qty</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var reserved in reservedNonFinancialRequirements)
+                                        {
+                                            @foreach (var r in reserved.NonFinancialRequirements)
+                                            {
+                                                bool isConflict = conflictedNames.Contains(r.ReqName.ToLower());
+                                                <tr class="@(isConflict ? "table-danger" : "")">
+                                                    <td>@reserved.EventName</td>
+                                                    <td>@reserved.EventDate.ToString("dd MMM yyyy")</td>
+                                                    <td>
+                                                        @r.ReqName
+                                                        @if (isConflict)
+                                                        {
+                                                            <span class="badge bg-danger ms-2 small">Conflict</span>
+                                                        }
+                                                    </td>
+                                                    <td class="text-center">@r.ReqQty</td>
+                                                </tr>
+                                            }
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    }
+
+                </div>
+
+                <div class="modal-footer border-top">
+                    <button class="btn btn-outline-secondary btn-sm" @onclick="CloseAllModals">Close</button>
+                    @if (conflictedNames.Count > 0)
+                    {
+                        <button class="btn btn-danger btn-sm px-4"
+                                disabled="@isActing"
+                                @onclick="RejectDueToConflict">
+                            @if (isActing)
+                            {
+                                <span class="spinner-border spinner-border-sm me-1"></span>
+                            }
+                            <i class="bi bi-x-circle me-1"></i> Reject Due to Conflict
+                        </button>
+                    }
+                </div>
+
+            </div>
+        </div>
+    </div>
+}
+
 
 @inject AdminServices adminServices
 @inject IJSRuntime JSRuntime
 
 @code {
-    // ── Data ────────────────────────────────────────────────
+    // ── Data ─────────────────────────────────────────────────
     private bool isLoading = false;
     private bool isLoadingDetails = false;
+    private bool isLoadingConflict = false;
     private bool isActing = false;
 
     private List<ViewRequisitionRequestDetailsDto> requisitionRequestDetails = new();
+    private List<ViewReservedNonFinancialRequirements> reservedNonFinancialRequirements = new();
     private EventRequisitionDetailsDto? singleRequisitionDetails;
     private string reviewMessage = string.Empty;
 
-    // ── Active selection ────────────────────────────────────
+    // ── Active selection ──────────────────────────────────────
     private Guid activeRequisitionId;
-    private decimal activeRequestedAmount;
-    private string activeReviewMessage = string.Empty;
 
-    // ── Modal flags ─────────────────────────────────────────
-    private bool showReviewModal = false;
+    // ── Modal flags ───────────────────────────────────────────
     private bool showViewModal = false;
     private bool showRejectModal = false;
-    private bool showApproveModal = false;
+    private bool showConflictModal = false;
 
-    // ── Init ─────────────────────────────────────────────────
+    // ── Conflict state ────────────────────────────────────────
+    private string conflictEventName = "";
+    private List<EventRequirementDto> currentNonFinancial = new();
+    private HashSet<string> conflictedNames = new();
+
+    // ── Filters ───────────────────────────────────────────────
+    private string filterSociety = string.Empty;
+
+    private IEnumerable<ViewRequisitionRequestDetailsDto> FilteredRequisitions =>
+        requisitionRequestDetails.Where(r =>
+            string.IsNullOrEmpty(filterSociety) || r.SocietyName == filterSociety
+        );
+
+    // ── Init ──────────────────────────────────────────────────
     protected override async Task OnInitializedAsync()
     {
         isLoading = true;
@@ -295,11 +455,14 @@ else
         {
             var data = await adminServices.GetRequisitionRequestDetails();
             requisitionRequestDetails = data ?? new();
+
+            var reservedData = await adminServices.GetReservedNonFinancialResources();
+            reservedNonFinancialRequirements = reservedData ?? new();
         }
         catch (Exception ex)
         {
-            await JSRuntime.InvokeVoidAsync("alert", "An error occurred while fetching requisition requests.");
             Console.WriteLine($"Error fetching data: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("alert", "An error occurred while fetching requisition requests.");
         }
         finally
         {
@@ -307,8 +470,7 @@ else
         }
     }
 
-    // ── Modal Openers ────────────────────────────────────────
-
+    // ── Modal Openers ─────────────────────────────────────────
     private async Task OpenViewModal(Guid requisitionId)
     {
         showViewModal = true;
@@ -317,8 +479,7 @@ else
 
         try
         {
-            var data = await adminServices.ViewRequisitionRequestDetails(requisitionId);
-            singleRequisitionDetails = data;
+            singleRequisitionDetails = await adminServices.ViewRequisitionRequestDetails(requisitionId);
         }
         catch (Exception ex)
         {
@@ -337,16 +498,61 @@ else
         showRejectModal = true;
     }
 
-    private void CloseAllModals()
+    private async Task OpenConflictModal(ViewRequisitionRequestDetailsDto req)
     {
-        showReviewModal = false;
-        showViewModal = false;
-        showRejectModal = false;
-        showApproveModal = false;
-        singleRequisitionDetails = null;
+        activeRequisitionId = req.Id;
+        conflictEventName = req.EventName;
+        currentNonFinancial = new();
+        conflictedNames = new();
+        showConflictModal = true;
+        isLoadingConflict = true;
+
+        try
+        {
+            // Load full requisition details to get the requirements list
+            var details = await adminServices.ViewRequisitionRequestDetails(req.Id);
+
+            if (details?.EventRequirements != null)
+            {
+                // Extract only non-financial requirements
+                currentNonFinancial = details.EventRequirements
+                    .Where(r => r.Type.Equals("non-financial", StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
+
+            // Build a flat set of all reserved requirement names (lowercase for comparison)
+            var reservedNames = reservedNonFinancialRequirements
+                .SelectMany(r => r.NonFinancialRequirements)
+                .Select(r => r.ReqName.ToLower())
+                .ToHashSet();
+
+            // Find which current non-financial reqs conflict
+            conflictedNames = currentNonFinancial
+                .Where(r => reservedNames.Contains(r.Name.ToLower()))
+                .Select(r => r.Name.ToLower())
+                .ToHashSet();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading conflict data: {ex.Message}");
+        }
+        finally
+        {
+            isLoadingConflict = false;
+        }
     }
 
-    // ── Actions ──────────────────────────────────────────────
+    private void CloseAllModals()
+    {
+        showViewModal = false;
+        showRejectModal = false;
+        showConflictModal = false;
+        singleRequisitionDetails = null;
+        currentNonFinancial = new();
+        conflictedNames = new();
+    }
+
+    // ── Actions ───────────────────────────────────────────────
     private async Task ConfirmReject()
     {
         isActing = true;
@@ -373,6 +579,35 @@ else
         }
     }
 
+    private async Task RejectDueToConflict()
+    {
+        isActing = true;
+        try
+        {
+            var conflictList = string.Join(", ", conflictedNames);
+            var autoMessage = $"Rejected due to non-financial resource conflict. The following requirements are already reserved: {conflictList}.";
+
+            var response = await adminServices.RejectEventRequisition(activeRequisitionId, autoMessage);
+            CloseAllModals();
+
+            if (response.Success)
+                await JSRuntime.InvokeVoidAsync("alert", "Requisition rejected due to conflict.");
+            else
+                await JSRuntime.InvokeVoidAsync("alert", $"Failed to reject: {response.Error}");
+
+            await OnInitializedAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error rejecting: {ex.Message}");
+            await JSRuntime.InvokeVoidAsync("alert", "An error occurred.");
+        }
+        finally
+        {
+            isActing = false;
+        }
+    }
+
     private async Task HandleApprove(Guid requisitionId)
     {
         isActing = true;
@@ -384,7 +619,7 @@ else
             if (response)
                 await JSRuntime.InvokeVoidAsync("alert", "Requisition approved successfully.");
             else
-                await JSRuntime.InvokeVoidAsync("alert", $"Failed to approve");
+                await JSRuntime.InvokeVoidAsync("alert", "Failed to approve.");
 
             await OnInitializedAsync();
         }
@@ -398,7 +633,4 @@ else
             isActing = false;
         }
     }
-
-    // ── Filters ──────────────────────────────────────────────
-    private string filterSociety = string.Empty;
 }

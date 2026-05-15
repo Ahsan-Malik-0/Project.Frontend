@@ -467,15 +467,15 @@
     {
         reqError = null;
 
-        if (string.IsNullOrWhiteSpace(req_name) || req_qty <= 0)
+        if (string.IsNullOrWhiteSpace(req_name))
         {
             reqError = "Name and quantity are required.";
             return;
         }
 
-        if (req_type == "financial" && req_price == 0)
+        if (req_type == "financial" && req_price == 0 && req_qty <= 0)
         {
-            reqError = "Price can't be zero for a financial requirement.";
+            reqError = "Price and quantity can't be zero for a financial requirement.";
             return;
         }
 

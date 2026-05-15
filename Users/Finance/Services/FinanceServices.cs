@@ -116,6 +116,92 @@ namespace Project.Frontend.FinanceServices
             }
         }
 
+        // View History of Requisition
+        public async Task<List<ViewRequisitionDetailsForFinanceHistoryDto>> GetRequisitionHistory()
+        {
+            try
+            {
+                var response = await httpClient.GetAsync("Finance/ViewEventRequisitionHistory");
+                if (!response.IsSuccessStatusCode)
+                    return new List<ViewRequisitionDetailsForFinanceHistoryDto>();
+
+                var requisitionHistory = await response.Content.ReadFromJsonAsync<List<ViewRequisitionDetailsForFinanceHistoryDto>>();
+
+                return requisitionHistory ?? new List<ViewRequisitionDetailsForFinanceHistoryDto>();
+            }
+            catch
+            {
+                return new List<ViewRequisitionDetailsForFinanceHistoryDto>();
+            }
+        }
+
+        // Handle Audits ---------------------------------------------------------------------------
+        public async Task<EventAudit?> GetEventAudit(Guid eventId)
+        {
+            try
+            {
+                var response = await httpClient.GetAsync($"Finance/ViewEventAuditDetails/{eventId}");
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    return null;
+                }
+                var pendingAudits = await response.Content.ReadFromJsonAsync<EventAudit>();
+                return pendingAudits ?? null;
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return null;
+            }
+        }
+
+        public async Task<ResponseResult> VerifyTakeAmount(Guid auditId)
+        {
+            try
+            {
+                var response = await httpClient.GetAsync($"Finance/verifyTakeAmount/{auditId}");
+                if (!response.IsSuccessStatusCode)
+                {
+                    var resString = await response.Content.ReadAsStringAsync();
+                    var jsonNode = JsonNode.Parse(resString);
+                    var error = jsonNode?["errors"]?.ToString() ?? string.Empty;
+
+                    return new ResponseResult() { Success = false, Error = error };
+                }
+
+                return new ResponseResult() { Success = true };
+
+            }
+            catch (Exception ex)
+            {
+                return new ResponseResult() { Success = false, Error = ex.Message };
+            }
+        }
+
+        public async Task<ResponseResult> RequestAudit(Guid requisitionId)
+        {
+            try
+            {
+                var response = await httpClient.GetAsync($"Finance/RequestForEventAudit/{requisitionId}");
+                if (!response.IsSuccessStatusCode)
+                {
+                    var resString = await response.Content.ReadAsStringAsync();
+                    var jsonNode = JsonNode.Parse(resString);
+                    var error = jsonNode?["errors"]?.ToString() ?? string.Empty;
+
+                    return new ResponseResult() { Success = false, Error = error };
+                }
+
+                return new ResponseResult() { Success = true };
+
+            }
+            catch (Exception ex)
+            {
+                return new ResponseResult() { Success = false, Error = ex.Message };
+            }
+        }
 
         // Profile Details
         public async Task<MemberProfileDto?> GetProfile(Guid memberId)

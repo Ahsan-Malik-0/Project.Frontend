@@ -91,6 +91,28 @@ namespace Project.Frontend.AdminServices
             }
         }
 
+        public async Task<List<ViewReservedNonFinancialRequirements?>> GetReservedNonFinancialResources()
+        {
+            try
+            {
+                var response = await httpClient.GetAsync("Admin/ViewReservedNonFinancialRequirements");
+                if (!response.IsSuccessStatusCode)
+                    return null!;
+
+                var reservedResources = await response.Content.ReadFromJsonAsync<List<ViewReservedNonFinancialRequirements>>();
+
+                if (reservedResources == null || reservedResources.Count == 0)
+                    return null!;
+
+                return reservedResources!;
+
+            }
+            catch
+            {
+                return null!;
+            }
+        }
+
 
         // Profile Details
         public async Task<MemberProfileDto?> GetProfile(Guid memberId)

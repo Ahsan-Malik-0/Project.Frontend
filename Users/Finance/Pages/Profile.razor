@@ -124,7 +124,7 @@ else
 }
 
 
-@inject AdminServices adminServices
+@inject FinanceServices financeServices
 @inject ClaimServices claimServices
 @inject IJSRuntime JS
 @code {
@@ -149,7 +149,7 @@ else
             var claims = await claimServices.GetClaims();
             id = claims.Id;
 
-            memberProfile = await adminServices.GetProfile(Guid.Parse(id));
+            memberProfile = await financeServices.GetProfile(Guid.Parse(id));
 
             if (memberProfile == null)
             {
@@ -214,7 +214,7 @@ else
             Picture = base64Image // null if no new image
         };
 
-        var response = await adminServices.UpdateProfile(updateProfile);
+        var response = await financeServices.UpdateProfile(updateProfile);
 
         if (response.Success)
         {
