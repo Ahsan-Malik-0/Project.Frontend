@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 namespace Project.Frontend.Model.DTOs
 {
     public class YearlyBudgetResponseDto
@@ -13,14 +12,20 @@ namespace Project.Frontend.Model.DTOs
         public Guid SocietyId { get; set; }
         public List<YearlyEventResponseDto>? YearlyEvents { get; set; }
     }
-    
+
     public class CreateYearlyBudgetDto
     {
-        [Required]
         public required string Session { get; set; }
-        [Required (ErrorMessage = "Requested amount is required.")]
         public required decimal RequestedAmount { get; set; }
-        public DateTime RequestedDate { get; set; }
+        public required DateTime RequestedDate { get; set; }
         public ICollection<CreateYearlyEventDto>? YearlyEvents { get; set; }
+    }
+
+    public class ApproveYearlyBudgetDto
+    {
+        public Guid Id { get; set; }
+        public required decimal AllotedAmount { get; set; }
+        public required DateTime AllotedDate { get; set; }
+        public decimal Credits { get; set; }
     }
 }

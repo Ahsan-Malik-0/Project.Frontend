@@ -396,13 +396,15 @@ else
         bool adminApproved = currentStatus == "Approved By Admin";
         bool financeRejected = currentStatus == "Reject By Finance";
         bool budgetReleased = currentStatus == "Budget Released By Finance";
-        bool eventCompleted = currentStatus == "Event completed";
+        bool eventCompleted = currentStatus == "Event Completed";
+        bool requestForAudit = currentStatus == "Request For Audit";
+        bool auditCleared = currentStatus == "Audit Cleared";
 
         // Step 1 — Requisition Submitted (Previously "Pending")
         StatusStep step1;
-        if (saRejected || saApproved || adminRejected || adminApproved || financeRejected || budgetReleased || eventCompleted)
+        if (saRejected || saApproved || adminRejected || adminApproved || financeRejected || budgetReleased || eventCompleted || requestForAudit || auditCleared)
             step1 = new StatusStep("Requisition Submitted", "Requisition has been submitted.", "#198754", "bi-check-lg",
-"text-success");
+    "text-success");
         else
             step1 = new StatusStep("Requisition Submitted", "Awaiting submission.", "#ced4da", "bi-hourglass-split", "text-muted");
 
@@ -410,21 +412,21 @@ else
         StatusStep step2;
         if (saRejected)
             step2 = new StatusStep("Reject By Student Affairs", "Rejected at this stage.", "#dc3545", "bi-x-lg", "text-danger");
-        else if (saApproved || adminApproved || adminRejected || financeRejected || budgetReleased || eventCompleted)
+        else if (saApproved || adminApproved || adminRejected || financeRejected || budgetReleased || eventCompleted || requestForAudit || auditCleared)
             step2 = new StatusStep("Approved By Student Affairs", "Approved and forwarded to Admin.", "#198754", "bi-check-lg",
-"text-success");
+    "text-success");
         else if (currentStatus == "A" || string.IsNullOrEmpty(currentStatus))
             step2 = new StatusStep("Student Affairs Review", "Awaiting review by Student Affairs.", "#ffc107", "bi-clock",
-"text-warning");
+    "text-warning");
         else
             step2 = new StatusStep("Student Affairs Review", "Awaiting review by Student Affairs.", "#ced4da", "bi-clock",
-"text-muted");
+    "text-muted");
 
         // Step 3 — Admin
         StatusStep step3;
         if (adminRejected)
             step3 = new StatusStep("Reject By Admin", "Rejected by Admin.", "#dc3545", "bi-x-lg", "text-danger");
-        else if (adminApproved || financeRejected || budgetReleased || eventCompleted)
+        else if (adminApproved || financeRejected || budgetReleased || eventCompleted || requestForAudit || auditCleared)
             step3 = new StatusStep("Approved By Admin", "Approved by Admin.", "#198754", "bi-check-lg", "text-success");
         else if (saApproved)
             step3 = new StatusStep("Admin Review", "Awaiting Admin approval.", "#ffc107", "bi-clock", "text-warning");
@@ -435,26 +437,59 @@ else
         StatusStep step4;
         if (financeRejected)
             step4 = new StatusStep("Reject By Finance", "Rejected by Finance department.", "#dc3545", "bi-x-lg", "text-danger");
-        else if (budgetReleased || eventCompleted)
+        else if (budgetReleased || eventCompleted || requestForAudit || auditCleared)
             step4 = new StatusStep("Budget Released By Finance", "Budget has been released.", "#0d6efd", "bi-cash-stack",
-"text-primary");
+    "text-primary");
         else if (adminApproved)
             step4 = new StatusStep("Finance Release", "Awaiting budget release by Finance.", "#ffc107", "bi-cash-stack",
-"text-warning");
+    "text-warning");
         else
             step4 = new StatusStep("Finance Release", "Awaiting budget release by Finance.", "#ced4da", "bi-cash-stack",
-"text-muted");
+    "text-muted");
 
         // Step 5 — Event Completion
         StatusStep step5;
         if (eventCompleted)
             step5 = new StatusStep("Event completed", "Event has been successfully completed.", "#198754", "bi-trophy",
-"text-success");
+    "text-success");
         else if (budgetReleased)
             step5 = new StatusStep("Event Completion", "Ready to complete event.", "#ffc107", "bi-calendar-check", "text-warning");
+        else if (requestForAudit || auditCleared)
+            step5 = new StatusStep("Event completed", "Event has been successfully completed.", "#198754", "bi-trophy",
+    "text-success");
         else
             step5 = new StatusStep("Event Completion", "Event pending completion.", "#ced4da", "bi-calendar-check", "text-muted");
 
-        return new List<StatusStep> { step1, step2, step3, step4, step5 };
+        // Step 6 — Request For Audit
+        StatusStep step6;
+        if (requestForAudit)
+            step6 = new StatusStep("Request For Audit", "Audit has been requested for this event.", "#ffc107", "bi-clipboard-check",
+    "text-warning");
+        else if (auditCleared)
+            step6 = new StatusStep("Request For Audit", "Audit has been requested.", "#198754", "bi-check-lg",
+    "text-success");
+        else if (eventCompleted)
+            step6 = new StatusStep("Request For Audit", "Awaiting audit request.", "#ced4da", "bi-clipboard",
+    "text-muted");
+        else
+            step6 = new StatusStep("Request For Audit", "Awaiting audit request.", "#ced4da", "bi-clipboard",
+    "text-muted");
+
+        // Step 7 — Audit Cleared (Fixed: Gray when only Request For Audit, Yellow when requested but not cleared is not applicable here)
+        StatusStep step7;
+        if (auditCleared)
+            step7 = new StatusStep("Audit Cleared", "Audit has been cleared successfully.", "#198754", "bi-check-circle",
+    "text-success");
+        else if (requestForAudit)
+            step7 = new StatusStep("Audit Cleared", "Pending audit clearance.", "#ced4da", "bi-shield-check",
+    "text-muted");  // Changed from yellow to gray
+        else if (eventCompleted)
+            step7 = new StatusStep("Audit Cleared", "Pending audit clearance.", "#ced4da", "bi-shield-check",
+    "text-muted");
+        else
+            step7 = new StatusStep("Audit Cleared", "Pending audit clearance.", "#ced4da", "bi-shield-check",
+    "text-muted");
+
+        return new List<StatusStep> { step1, step2, step3, step4, step5, step6, step7 };
     }
 }

@@ -495,11 +495,11 @@ namespace Project.Frontend.ChairpersonServices
         }
 
         // Edit Profile
-        public async Task<ResponseResult> UpdateProfile(MemberProfileUpdateDto updatedProfile)
+        public async Task<ResponseResult> UpdateProfile(UpdateMemberProfileDto updatedProfile)
         {
             try
             {
-                var response = await httpClient.PutAsJsonAsync("Chairperson/updateProfile", updatedProfile);
+                var response = await httpClient.PutAsJsonAsync($"ChairPerson/updateProfile/{updatedProfile.Id}", updatedProfile);
 
                 if (!response.IsSuccessStatusCode)
                 {

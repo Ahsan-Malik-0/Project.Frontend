@@ -59,9 +59,11 @@ Auth/
  Model/LoginDto.cs
  Services/CustomAuthStateProvider.cs
 Model/
+ Administration.cs
  AuditSpend.cs
  Claims.cs
  DTOs/
+  AdministrationDto.cs
   AuditSpendDto.cs
   EventAuditDto.cs
   EventDto.cs
@@ -69,6 +71,7 @@ Model/
   EventRequisitionDto.cs
   MemberDto.cs
   YearlyBudgetDto.cs
+  YearlyBudgetScrutinyDto.cs
   YearlyEventDto.cs
   YearlyEventRequirementDto.cs
  Event.cs
@@ -78,6 +81,7 @@ Model/
  ResponseResult.cs
  Society.cs
  YearlyBudget.cs
+ YearlyBudgetScrutiny.cs
  YearlyEvent.cs
  YearlyEventRequirement.cs
 obj/Debug/net8.0/
@@ -88,6 +92,7 @@ Program.cs
 Shared/Services/
  ClaimServices.cs
  Non-Financional_Req.cs
+ YearlyBudgetScrutinyServices.cs
 Users/
  Admin/Services/AdminServices.cs
  Chairperson/Services/ChairpersonServices.cs
@@ -344,9 +349,12 @@ Layout/
  StudentAffairs/
   StudentAffairsLayout.razor
   StudentAffairsNavMenu.razor
-Shared/Pages/AccessDenied.razor
+Shared/Pages/
+ AccessDenied.razor
+ YearlyBudgetScrutiny.razor
 Users/Admin/Pages/
  Dashboard.razor
+ HandleYearlyBudget.razor
  Profile.razor
 Users/Chairperson/Pages/
  AddYearlyBudget.razor
@@ -362,6 +370,7 @@ Users/Chairperson/Pages/
  UpdateRequisition.razor
 Users/Finance/Pages/
  Dashboard.razor
+ HandleYearlyBudget.razor
  History.razor
  Profile.razor
 Users/President/Pages/
@@ -372,6 +381,7 @@ Users/President/Pages/
 Users/StudentAffairs/Pages/
  ApprovedRequisitions.razor
  Dashboard.razor
+ HandleYearlyBudget.razor
  Profile.razor
 _Imports.razor
 
@@ -398,9 +408,12 @@ Layout/
  StudentAffairs/
   StudentAffairsLayout.razor
   StudentAffairsNavMenu.razor
-Shared/Pages/AccessDenied.razor
+Shared/Pages/
+ AccessDenied.razor
+ YearlyBudgetScrutiny.razor
 Users/Admin/Pages/
  Dashboard.razor
+ HandleYearlyBudget.razor
  Profile.razor
 Users/Chairperson/Pages/
  AddYearlyBudget.razor
@@ -416,6 +429,7 @@ Users/Chairperson/Pages/
  UpdateRequisition.razor
 Users/Finance/Pages/
  Dashboard.razor
+ HandleYearlyBudget.razor
  History.razor
  Profile.razor
 Users/President/Pages/
@@ -426,5 +440,6 @@ Users/President/Pages/
 Users/StudentAffairs/Pages/
  ApprovedRequisitions.razor
  Dashboard.razor
+ HandleYearlyBudget.razor
  Profile.razor
 _Imports.razor

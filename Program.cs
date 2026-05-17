@@ -30,5 +30,6 @@ builder.Services.AddScoped<ChairpersonServices>();
 builder.Services.AddScoped<StudentAffairsServices>();
 builder.Services.AddScoped<AdminServices>();
 builder.Services.AddScoped<FinanceServices>();
+builder.Services.AddScoped<YearlyBudgetScrutinyServices>();
 
 await builder.Build().RunAsync();

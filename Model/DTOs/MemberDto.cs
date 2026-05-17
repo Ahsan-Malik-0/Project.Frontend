@@ -1,8 +1,41 @@
-﻿using Microsoft.AspNetCore.Components.Forms;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace Project.Frontend.Model.DTOs
 {
+    public class MemberDto
+    {
+
+        [StringLength(20)]
+        [Required(ErrorMessage = "Name is required")]
+        public required string Name { get; set; }
+
+        [StringLength(20)]
+        [Required(ErrorMessage = "Username is required")]
+        public required string Username { get; set; }
+
+        [Required(ErrorMessage = "Password is required")]
+        public required string HashPassword { get; set; }
+
+        [Required(ErrorMessage = "Role is required")]
+        public required string Role { get; set; }
+
+        public string? Picture { get; set; }
+
+        [Required(ErrorMessage = "Society Id is required")]
+        public Guid SocietyId { get; set; }
+    }
+
+    public class MemberLoginDto
+    {
+        [Required(ErrorMessage = "Username is required")]
+        [StringLength(20)]
+        public required string Username { get; set; }
+
+        [Required(ErrorMessage = "Password is required")]
+        public required string HashPassword { get; set; }
+    }
+
     public class MemberProfileDto
     {
         public required string Name { get; set; }
@@ -12,31 +45,39 @@ namespace Project.Frontend.Model.DTOs
         public Guid SocietyId { get; set; }
     }
 
-    public class MemberProfileUpdateDto
+    public class UpdateMemberProfileDto
     {
-        public required string Id { get; set; }
+        [Required(ErrorMessage = "Id is required")]
+        public Guid Id { get; set; }
+
+        [Required(ErrorMessage = "Name is required")]
         public required string Name { get; set; }
+        [StringLength(20)]
+
+        [Required(ErrorMessage = "Username is required")]
         public required string Username { get; set; }
+
+        //[Required(ErrorMessage = "OldHashPassword is required")]
         public string? OldHashPassword { get; set; }
+
+        //[Required(ErrorMessage = "NewHashPassword is required")]
         public string? NewHashPassword { get; set; }
+
         public string? Picture { get; set; }
     }
 
     public class ViewMemberProfileDto
     {
         public Guid Id { get; set; }
-        public string? Name { get; set; }
-        public string? Username { get; set; }
+        public required string Name { get; set; }
+        public required string Username { get; set; }
     }
 
     public class EditMemberProfileDto
     {
-        [Required(ErrorMessage = "Name is required.")]
         public required string Name { get; set; }
-        [Required(ErrorMessage = "Username is required.")]
         public required string Username { get; set; }
-        [Required(ErrorMessage = "New password is required.")]
-        public required string newHashPassword { get; set; }
+        public required string NewHashPassword { get; set; }
     }
 
     public class ChairpersonDetailsForRequisitionDto

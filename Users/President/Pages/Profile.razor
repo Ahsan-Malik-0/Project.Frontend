@@ -130,7 +130,7 @@ else
 @inject ClaimServices claimServices
 @inject IJSRuntime JS
 @code {
-    private string id = "";
+    private Guid id;
     private bool loading = false;
     private bool isEditMode = false;
 
@@ -151,7 +151,7 @@ else
         try
         {
             var claims = await claimServices.GetClaims();
-            id = claims.Id;
+            id = Guid.Parse(claims.Id);
 
             memberProfile = await presidentServices.GetProfile(id);
 
@@ -208,7 +208,7 @@ else
             base64Image = base64Parts.Length > 1 ? base64Parts[1] : null;
         }
 
-        var updateProfile = new MemberProfileUpdateDto()
+        var updateProfile = new UpdateMemberProfileDto()
         {
             Id = id,
             Name = memberProfile!.Name,

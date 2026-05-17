@@ -4,11 +4,11 @@ namespace Project.Frontend.Model.DTOs
 {
     public class CreateEventAuditDto
     {
+        public Guid EventId { get; set; }
         public required decimal FundProvided { get; set; }
         public required decimal SpendAmount { get; set; }
         public required decimal RevenueGenerated { get; set; }
         public required decimal RemainingAmount { get; set; }
-        public required Guid EventId { get; set; }
         public required ICollection<CreateAuditSpendDto> Spends { get; set; }
     }
 
@@ -19,5 +19,10 @@ namespace Project.Frontend.Model.DTOs
         public required decimal RevenueGenerated { get; set; }
         public required decimal RemainingAmount { get; set; }
         public required ICollection<UpdateAuditSpendDto> Spends { get; set; }
+    }
+
+    public class UpdateAuditStatusDto
+    {
+        public required string Status { get; set; }
     }
 }

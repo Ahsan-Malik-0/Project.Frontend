@@ -144,7 +144,7 @@ namespace Project.Frontend.PresidentServices
             }
         }
 
-        public async Task<MemberProfileDto?> GetProfile(string memberId)
+        public async Task<MemberProfileDto?> GetProfile(Guid memberId)
         {
             var response = await httpClient.GetAsync($"president/viewProfile/{memberId}");
 
@@ -158,7 +158,7 @@ namespace Project.Frontend.PresidentServices
             return memberProfile;
         }
 
-        public async Task<ResponseResult> UpdateProfile(MemberProfileUpdateDto updatedProfile)
+        public async Task<ResponseResult> UpdateProfile(UpdateMemberProfileDto updatedProfile)
         {
             try
             {

@@ -64,9 +64,9 @@ else
                                     <label class="form-label fw-semibold">New Password</label>
                                     <InputText type="password"
                                                class="form-control"
-                                               @bind-Value="editProfile.newHashPassword"
+                                               @bind-Value="editProfile.NewHashPassword"
                                                placeholder="Enter new password" />
-                                    <ValidationMessage For="@(() => editProfile.newHashPassword)" class="text-danger small" />
+                                    <ValidationMessage For="@(() => editProfile.NewHashPassword)" class="text-danger small" />
                                 </div>
                             </div>
                         }
@@ -118,7 +118,7 @@ else
     {
         Name = "",
         Username = "",
-        newHashPassword = ""
+        NewHashPassword = ""
     };
 
     private EditMemberProfileDto? backupProfile;
@@ -158,7 +158,7 @@ else
         {
             Name = editProfile.Name,
             Username = editProfile.Username,
-            newHashPassword = ""
+            NewHashPassword = ""
         };
 
         isEditMode = true;
@@ -170,7 +170,7 @@ else
         {
             editProfile.Name = backupProfile.Name;
             editProfile.Username = backupProfile.Username;
-            editProfile.newHashPassword = "";
+            editProfile.NewHashPassword = "";
         }
 
         error = "";
@@ -192,7 +192,7 @@ else
                 // Reflect changes in the view model
                 presidentProfile!.Name = editProfile.Name;
                 presidentProfile!.Username = editProfile.Username;
-                editProfile.newHashPassword = "";
+                editProfile.NewHashPassword = "";
                 isEditMode = false;
             }
             else

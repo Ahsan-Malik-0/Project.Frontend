@@ -156,7 +156,7 @@ namespace Project.Frontend.StudentAffairsServices
         }
 
         // Edit Profile
-        public async Task<ResponseResult> UpdateProfile(MemberProfileUpdateDto updatedProfile)
+        public async Task<ResponseResult> UpdateProfile(UpdateMemberProfileDto updatedProfile)
         {
             try
             {

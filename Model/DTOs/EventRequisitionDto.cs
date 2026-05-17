@@ -1,17 +1,13 @@
-﻿using System.ComponentModel.DataAnnotations;
-
+﻿
 namespace Project.Frontend.Model.DTOs
 {
     public class CreateEventRequisitionDto
     {
-        [Required(ErrorMessage = "Subject is Required")]
-        public string Subject { get; set; } = string.Empty;
-
-        [Required(ErrorMessage = "Body is Required")]
-        public string Body { get; set; } = string.Empty;
-        public DateTime RequestedDate { get; set; }
+        public required string Subject { get; set; } = string.Empty;
+        public required string Body { get; set; } = string.Empty;
+        public required DateTime RequestedDate { get; set; }
         public required decimal RequestedAmount { get; set; }
-        public Guid EventId { get; set; }
+        public required Guid EventId { get; set; }
     }
 
     public class UpdateEventRequisitionDto
@@ -23,17 +19,21 @@ namespace Project.Frontend.Model.DTOs
         public required ICollection<EventRequirementDto> EventRequirements { get; set; } 
     }
 
+
+    // For pending requisition list
     public class PendingEventRequisitionDto
     {
         public Guid Id { get; set; }
         public required string EventName { get; set; }
         public DateTime EventDate { get; set; }
         public required string Status { get; set; }
-        public string? ReviewMessage { get; set; }
+        public string? ReviewMessage { get; set; } // changed by jaosn on 6 march 11:31
     }
 
+    // For more details after selecting a specific requisition
     public class EventRequisitionDetailsDto
     {
+        public Guid Id { get; set; }
         public required string Subject { get; set; }
         public DateTime EventDate { get; set; }
         public DateTime RequestedDate { get; set; }
@@ -42,7 +42,7 @@ namespace Project.Frontend.Model.DTOs
         public required string ChairpersonName { get; set; }
         public required string SocietyName { get; set; }
     }
-    
+
     public class EventRequisitionHistoryDto
     {
         public Guid RequisitionId { get; set; }
@@ -67,7 +67,6 @@ namespace Project.Frontend.Model.DTOs
         public decimal RequestedAmount { get; set; }
         public decimal AllotedAmount { get; set; }
         public decimal BiitContribution { get; set; }
-
     }
 
     public class ReviewEventRequisitionDto
@@ -100,7 +99,6 @@ namespace Project.Frontend.Model.DTOs
         public required string Status { get; set; }
         
     }
-
     public class ViewRequisitionDetailsForStudentAffairsDto : ViewRequisitionDetailsForFinanceDto 
     {
         public required string Status { get; set; }
@@ -111,4 +109,5 @@ namespace Project.Frontend.Model.DTOs
     {
         public required string ResponseMessage { get; set; }
     }
+    
 }

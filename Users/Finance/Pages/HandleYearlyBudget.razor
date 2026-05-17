@@ -1,0 +1,21 @@
+@page "/finance/handle-yearly-budget"
+@layout FinanceLayout
+@attribute [Authorize(Roles = "finance")]
+
+
+<YearlyBudgetScrutiny Id=@Id Role=@Role />
+
+@inject ClaimServices claimServices
+@code{
+
+    protected override async Task OnInitializedAsync()
+    {
+        var claims = await claimServices.GetClaims();
+        Id = Guid.Parse(claims.Id);
+        Role = claims.Role;
+    }
+
+    public Guid Id { get; set; }
+    public string? Role { get; set; }
+
+}
