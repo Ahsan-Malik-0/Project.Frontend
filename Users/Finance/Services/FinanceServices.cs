@@ -15,21 +15,21 @@ namespace Project.Frontend.FinanceServices
             this.httpClient = httpClient;
         }
 
-        public async Task<List<ViewRequisitionDetailsForFinanceDto>> GetRequisitionRequestDetails()
+        public async Task<List<RequisitionDetailsForFinance>?> GetRequisitionRequestDetails()
         {
             try
             {
                 var response = await httpClient.GetAsync("Finance/ViewEventRequisitionDetails");
                 if (!response.IsSuccessStatusCode)
-                    return new List<ViewRequisitionDetailsForFinanceDto>();
+                    return null;
 
-                var requisitionDetails = await response.Content.ReadFromJsonAsync<List<ViewRequisitionDetailsForFinanceDto>>();
+                var requisitionDetails = await response.Content.ReadFromJsonAsync<List<RequisitionDetailsForFinance>>();
 
-                return requisitionDetails ?? new List<ViewRequisitionDetailsForFinanceDto>();
+                return requisitionDetails ?? null;
             }
             catch
             {
-                return new List<ViewRequisitionDetailsForFinanceDto>();
+                return null;
             }
         }
 
@@ -75,23 +75,23 @@ namespace Project.Frontend.FinanceServices
             }
         }
 
-        public async Task<ChairpersonDetailsForRequisitionDto?> GetChairpersonDetailsForRequisition(string societyName)
-        {
-            try
-            {
-                var response = await httpClient.GetAsync($"Finance/getChairpersonDetails/{societyName}");
-                if (!response.IsSuccessStatusCode)
-                    return null;
+        //public async Task<ChairpersonDetailsForRequisitionDto?> GetChairpersonDetailsForRequisition(string societyName)
+        //{
+        //    try
+        //    {
+        //        var response = await httpClient.GetAsync($"Finance/getChairpersonDetails/{societyName}");
+        //        if (!response.IsSuccessStatusCode)
+        //            return null;
 
-                var chairpersonDetails = await response.Content.ReadFromJsonAsync<ChairpersonDetailsForRequisitionDto>();
+        //        var chairpersonDetails = await response.Content.ReadFromJsonAsync<ChairpersonDetailsForRequisitionDto>();
 
-                return chairpersonDetails ?? null;
-            }
-            catch
-            {
-                return null;
-            }
-        }
+        //        return chairpersonDetails ?? null;
+        //    }
+        //    catch
+        //    {
+        //        return null;
+        //    }
+        //}
 
         public async Task<ResponseResult> ReleasedEventRequisitionBudget(Guid requisitionId, string reviewMessage)
         {
@@ -117,21 +117,21 @@ namespace Project.Frontend.FinanceServices
         }
 
         // View History of Requisition
-        public async Task<List<ViewRequisitionDetailsForFinanceHistoryDto>> GetRequisitionHistory()
+        public async Task<List<EventRequisitionHistoryForFinance>?> GetRequisitionHistory()
         {
             try
             {
                 var response = await httpClient.GetAsync("Finance/ViewEventRequisitionHistory");
                 if (!response.IsSuccessStatusCode)
-                    return new List<ViewRequisitionDetailsForFinanceHistoryDto>();
+                    return null;
 
-                var requisitionHistory = await response.Content.ReadFromJsonAsync<List<ViewRequisitionDetailsForFinanceHistoryDto>>();
+                var requisitionHistory = await response.Content.ReadFromJsonAsync<List<EventRequisitionHistoryForFinance>>();
 
-                return requisitionHistory ?? new List<ViewRequisitionDetailsForFinanceHistoryDto>();
+                return requisitionHistory ?? null;
             }
             catch
             {
-                return new List<ViewRequisitionDetailsForFinanceHistoryDto>();
+                return null;
             }
         }
 

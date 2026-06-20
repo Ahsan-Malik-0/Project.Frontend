@@ -5,7 +5,7 @@
 @attribute [Authorize(Roles = "finance")]
 
 
-<h4 class="fw-bold my-4">Pending Event Requisitions:</h4>
+<h4 class="fw-bold mb-4">Pending Event Requisitions:</h4>
 @if (isLoading)
 {
     <div class="text-center text-muted py-5">
@@ -48,7 +48,7 @@ else
                         <p class="mb-2 small">
                             <i class="bi bi-cash-coin me-1 text-muted"></i>
                             <span class="text-muted">Alloted Budget:</span>
-                            <span class="fw-semibold text-primary ms-1">Rs @req.AllotedBudget.ToString("N0")</span>
+                            <span class="fw-semibold text-primary ms-1">Rs @req.AllocatedAmount.ToString("N0")</span>
                         </p>
                         <p class="mb-2 small">
                             <i class="bi bi-cash-coin me-1 text-muted"></i>
@@ -58,7 +58,7 @@ else
                         <p class="mb-2 small">
                             <i class="bi bi-cash-coin me-1 text-muted"></i>
                             <span class="text-muted">Total:</span>
-                            <span class="fw-semibold text-success ms-1">Rs @((req.AllotedBudget + req.BiitContribution).ToString("N0"))</span>
+                            <span class="fw-semibold text-success ms-1">Rs @((req.AllocatedAmount + req.BiitContribution).ToString("N0"))</span>
                         </p>
                     </div>
 
@@ -93,10 +93,10 @@ else
                 </div>
                 <div class="modal-body">
                     <p class="text-muted small mb-3">
-                        Provide the name of the member to whom the budget will be released.
+                        Message
                     </p>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold small">Member Name</label>
+                        @* <label class="form-label fw-semibold small">Member Name</label> *@
                         <input class="form-control"
                                placeholder="Enter member name"
                                @bind="activeReviewMessage" />
@@ -165,7 +165,7 @@ else
     private bool isActing = false;
 
     // Fix 1: initialize to new() instead of null! to avoid null crashes
-    private List<ViewRequisitionDetailsForFinanceDto> requisitionDetails = new();
+    private List<RequisitionDetailsForFinance> requisitionDetails = new();
 
     // Fix 2: removed unused `reviewMessage` field
     private string activeReviewMessage = string.Empty;
@@ -192,7 +192,7 @@ else
         }
     }
 
-    private void OpenReleasedModal(ViewRequisitionDetailsForFinanceDto req)
+    private void OpenReleasedModal(RequisitionDetailsForFinance req)
     {
         activeRequisitionId = req.RequisitionId;
         activeReviewMessage = $"Amount is handed over to {req.ChairpersonName}" ?? "N/A";

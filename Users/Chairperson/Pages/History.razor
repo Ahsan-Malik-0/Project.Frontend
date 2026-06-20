@@ -77,8 +77,8 @@
 
                         <!-- Footer -->
                         <div class="card-footer bg-white border-top d-flex gap-2 py-3">
-                            <button class="btn btn-outline-primary btn-sm flex-fill">
-                                    @* @onclick="() => OpenViewModal(item.RequisitionId)"> *@
+                            <button class="btn btn-outline-primary btn-sm flex-fill"
+                                    @onclick="() => OpenRequirementModal(item)">
                                 <i class="bi bi-eye me-1"></i> View Requisition
                             </button>
                             <button class="btn btn-outline-secondary btn-sm flex-fill"
@@ -97,18 +97,18 @@
 
 
 <!-- ===== MODAL: View Requisition ===== -->
-@if (showViewModal)
+@if (showRequirementModal)
 {
     <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.5)">
-        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content border-0 shadow">
                 <div class="modal-header border-bottom">
-                    <h6 class="modal-title fw-bold">Requisition Details</h6>
+                    <h6 class="modal-title fw-bold">Requirements</h6>
                     <button class="btn-close" @onclick="CloseAllModals"></button>
                 </div>
                 <div class="modal-body p-5">
 
-                    @if (isLoadingDetails)
+                    @* @if (isLoadingDetails)
                     {
                         <div class="text-center py-4">
                             <div class="spinner-border spinner-border-sm mb-2"></div>
@@ -138,11 +138,11 @@
                         <div class="mb-4">
                             <p>Respected Sir,</p>
                             <p style="white-space:pre-line;">@selectedRequisition.Body</p>
-                        </div>
+                        </div> *@
 
-                        @if (selectedRequisition.EventRequirements != null && selectedRequisition.EventRequirements.Any())
+                        @if (selectedRequisition!.Requirements != null && selectedRequisition.Requirements.Any())
                         {
-                            <strong>@selectedRequisition.SocietyName Society need the following:</strong>
+                            @* <strong>@selectedRequisition.S Society need the following:</strong> *@
                             <div class="table-responsive mb-4 mt-2">
                                 <table class="table table-bordered align-middle">
                                     <thead class="table-light text-center">
@@ -155,7 +155,7 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach (var req in selectedRequisition.EventRequirements)
+                                        @foreach (var req in selectedRequisition.Requirements)
                                         {
                                             <tr>
                                                 <td>@req.Type</td>
@@ -170,7 +170,7 @@
                                         <tr>
                                             <td colspan="4" class="text-end fw-bold">Total Requested Amount:</td>
                                             <td class="text-end fw-bold text-primary">
-                                                @selectedRequisition.EventRequirements.Sum(r => r.Quantity * r.Price).ToString("N2")
+                                                @selectedRequisition.Requirements.Sum(r => r.Quantity * r.Price).ToString("N2")
                                             </td>
                                         </tr>
                                     </tfoot>
@@ -182,13 +182,13 @@
                             <p class="text-center text-muted">No requirements added for this event.</p>
                         }
 
-                        <div class="mt-5 pt-4 border-top">
+                        @* <div class="mt-5 pt-4 border-top">
                             <p class="mb-1 fw-semibold">@selectedRequisition.ChairpersonName</p>
                             <p class="mb-4 text-muted">Chairperson (@selectedRequisition.SocietyName)</p>
                             <p class="mb-1 fw-semibold">Mr. Shahid Rashid</p>
                             <p class="text-muted">Assistant Director Student Affairs</p>
-                        </div>
-                    }
+                        </div> *@
+                    @* } *@
 
                 </div>
                 <div class="modal-footer border-top">
@@ -490,12 +490,12 @@
     private bool isLoadingAudit = false;
     private bool isActing = false;
 
-    private List<EventRequisitionHistoryDto> history = new();
-    private EventRequisitionDetailsDto? selectedRequisition;
+    private List<EventRequisitionHistoryForCP> history = new();
+    private EventRequisitionHistoryForCP? selectedRequisition;
     private EventAudit? activeAudit;
 
     // ── Modal flags ──────────────────────────────────────────
-    private bool showViewModal = false;
+    private bool showRequirementModal = false;
     private bool showAuditModal = false;
     private bool showReportModal = false;
 
@@ -525,27 +525,27 @@
     }
 
     // ── Modal Openers ────────────────────────────────────────
-    // private async Task OpenViewModal(Guid requisitionId)
-    // {
-    //     selectedRequisition = null;
-    //     showViewModal = true;
-    //     isLoadingDetails = true;
+    void OpenRequirementModal(EventRequisitionHistoryForCP dto)
+    {
+        selectedRequisition = dto;
+        showRequirementModal = true;
+        isLoadingDetails = true;
 
-    //     try
-    //     {
-    //         selectedRequisition = await chairpersonServices.GetRequisitionDetails(requisitionId);
-    //     }
-    //     catch (Exception ex)
-    //     {
-    //         Console.WriteLine($"Error loading requisition: {ex.Message}");
-    //     }
-    //     finally
-    //     {
-    //         isLoadingDetails = false;
-    //     }
-    // }
+        // try
+        // {
+        //     selectedRequisition = await chairpersonServices.GetRequisitionDetails(requisitionId);
+        // }
+        // catch (Exception ex)
+        // {
+        //     Console.WriteLine($"Error loading requisition: {ex.Message}");
+        // }
+        // finally
+        // {
+        //     isLoadingDetails = false;
+        // }
+    }
 
-    private async Task OpenAuditModal(EventRequisitionHistoryDto item)
+    private async Task OpenAuditModal(EventRequisitionHistoryForCP item)
     {
         activeRequisitionId = item.RequisitionId;
         activeEventId = item.EventId;
@@ -576,7 +576,7 @@
 
     private void CloseAllModals()
     {
-        showViewModal = false;
+        showRequirementModal = false;
         showAuditModal = false;
         showReportModal = false;
         selectedRequisition = null;

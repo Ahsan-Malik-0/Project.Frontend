@@ -356,7 +356,7 @@ else
                             </p>
                             <p class="mb-0">
                                 <strong>Event Date:</strong>
-                                @eventDate.ToString("dd MMM yyyy")
+                                @updateModel.EventDate.ToString("dd MMM yyyy")
                             </p>
                         </div>
 
@@ -448,7 +448,6 @@ else
     private string chairpersonName = "";
     private string chairpersonRole = "";
     private string societyName = "";
-    private DateTime eventDate;
     private string eventName = "";
 
     // ── UpdateModel model ───────────────────────────────────────────
@@ -714,6 +713,6 @@ else
     {
         var confirm = await JS.InvokeAsync<bool>("confirm", "Are you sure you want to cancel?");
         if (confirm)
-            nav.NavigateTo("/chairperson/events-requests");
+            nav.NavigateTo("/chairperson");
     }
 }

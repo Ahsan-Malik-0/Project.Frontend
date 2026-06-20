@@ -46,7 +46,7 @@ else
                         </p>
                         <p class="text-muted small mb-2">
                             <strong>Alloted Budget:</strong>
-                            <span class="fw-semibold text-primary">Rs @ph.AllotedBudget.ToString("N0")</span>
+                            <span class="fw-semibold text-primary">Rs @ph.AllocatedAmount.ToString("N0")</span>
                         </p>
                         <p class="mb-2 small">
                             <strong class="text-muted">BIIT Contribution:</strong>
@@ -54,17 +54,17 @@ else
                         </p>
                         <p class="mb-2 small">
                             <strong class="text-muted">Total:</strong>
-                            <span class="fw-semibold text-success ms-1">Rs @((ph.AllotedBudget + ph.BiitContribution).ToString("N0"))</span>
+                            <span class="fw-semibold text-success ms-1">Rs @((ph.AllocatedAmount + ph.BiitContribution).ToString("N0"))</span>
                         </p>
                         <p class="text-muted small mb-0">
                             <strong>Event Status:</strong>
-                            @if (ph.Status.Contains("Released", StringComparison.CurrentCultureIgnoreCase))
+                            @if (ph.RequisitionStatus.Contains("Released", StringComparison.CurrentCultureIgnoreCase))
                             {
-                                <strong class="ms-1 @GetStatusTextClass(ph.Status)">Not Completed Yet</strong>
+                                <strong class="ms-1 @GetStatusTextClass(ph.RequisitionStatus)">Not Completed Yet</strong>
                             }
                             else
                             {
-                                <strong class="ms-1 @GetStatusTextClass(ph.Status)">@ph.Status </strong>
+                                <strong class="ms-1 @GetStatusTextClass(ph.RequisitionStatus)">@ph.RequisitionStatus </strong>
                             }
                         </p>
                     </div>
@@ -385,8 +385,8 @@ else
     private bool isActing = false;
 
     // Fix 7: initialize to new() to avoid NullReferenceException on .Count
-    private List<ViewRequisitionDetailsForFinanceHistoryDto> requisitionHistory = new();
-    private EventRequisitionDetailsDto? singleRequisitionDetails;
+    private List<EventRequisitionHistoryForFinance> requisitionHistory = new();
+    private EventRequisitionHistoryForFinance? singleRequisitionDetails;
 
     // ── Modal flags ───────────────────────────────────────────
     private bool showAuditModal = false;
@@ -441,13 +441,13 @@ else
         }
     } *@
 
-    private async Task OpenAuditModal(ViewRequisitionDetailsForFinanceHistoryDto item)
+    private async Task OpenAuditModal(EventRequisitionHistoryForFinance item)
     {
         activeRequisitionId = item.RequisitionId;
         activeEventId = item.EventId;
         activeEventName = item.EventName;
         activeChairpersonName = item.ChairpersonName ?? "";
-        activeEventStatus = item.Status;
+        activeEventStatus = item.RequisitionStatus;
         activeAudit = null;
         showAuditModal = true;
         isLoadingAudit = true;

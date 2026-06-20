@@ -304,7 +304,7 @@ namespace Project.Frontend.ChairpersonServices
         }
 
         // Get requisition history
-        public async Task<List<EventRequisitionHistoryDto>> GetRequisitionHistory(Guid memberId)
+        public async Task<List<EventRequisitionHistoryForCP>?> GetRequisitionHistory(Guid memberId)
         {
             try
             {
@@ -312,16 +312,16 @@ namespace Project.Frontend.ChairpersonServices
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    return new List<EventRequisitionHistoryDto>();
+                    return null;
                 }
 
-                var requisitionHistory = await response.Content.ReadFromJsonAsync<List<EventRequisitionHistoryDto>>();
-                return requisitionHistory ?? new List<EventRequisitionHistoryDto>();
+                var requisitionHistory = await response.Content.ReadFromJsonAsync<List<EventRequisitionHistoryForCP>>();
+                return requisitionHistory ?? null;
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
-                return new List<EventRequisitionHistoryDto>();
+                return null;
             }
         }
 

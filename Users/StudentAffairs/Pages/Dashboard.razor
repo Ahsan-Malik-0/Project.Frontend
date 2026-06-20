@@ -13,14 +13,21 @@
 
         <!-- Society Filter -->
         <div>
-            <label class="form-label small fw-semibold mb-1">Society</label>
-            <select class="form-select form-select-sm" style="min-width: 160px;" @bind="filterSociety">
-                <option value="">All Societies</option>
-                @foreach (var name in requisitionRequestDetails.Select(r => r.SocietyName).Distinct())
-                {
-                    <option value="@name">@name</option>
-                }
-            </select>
+            @if (requisitionDetails != null)
+            {
+                <label class="form-label small fw-semibold mb-1">Society</label>
+                <select class="form-select form-select-sm" style="min-width: 160px;" @bind="filterSociety">
+                    <option value="">All Societies</option>
+                    @foreach (var name in requisitionDetails.Select(r => r.Event?.Society?.Name).Distinct())
+                    {
+                        <option value="@name">@name</option>
+                    }
+                </select>
+            }
+            else
+            {
+                <p>No Society Found</p>
+            }
         </div>
 
     </div>
@@ -33,7 +40,7 @@
         <p class="mb-0">Loading requisitions...</p>
     </div>
 }
-else if (requisitionRequestDetails == null || requisitionRequestDetails.Count == 0)
+else if (requisitionDetails == null || requisitionDetails.Count == 0)
 {
     <div class="text-center text-muted py-5">
         <i class="bi bi-inbox fs-1 d-block mb-2"></i>
@@ -43,14 +50,14 @@ else if (requisitionRequestDetails == null || requisitionRequestDetails.Count ==
 else
 {
     <div class="row g-4">
-        @foreach (var req in requisitionRequestDetails)
+        @foreach (var req in requisitionDetails)
         {
             <div class="col-12 col-md-6 col-xl-4">
                 <div class="card border shadow-sm h-100">
 
                     <!-- Card Header -->
                     <div class="card-header bg-white border-bottom d-flex align-items-center justify-content-between py-3">
-                        <span class="fw-semibold">@req.SocietyName</span>
+                        <span class="fw-semibold">@req.Event?.Society?.Name</span>
                     </div>
 
                     <!-- Card Body -->
@@ -58,12 +65,17 @@ else
                         <p class="mb-2 small">
                             <i class="bi bi-card-text me-1 text-muted"></i>
                             <span class="text-muted">Event Name:</span>
-                            <span class="fw-semibold ms-1">@req.EventName</span>
+                            <span class="fw-semibold ms-1">@req.Event?.Name</span>
                         </p>
                         <p class="mb-2 small">
                             <i class="bi bi-calendar-event me-1 text-muted"></i>
                             <span class="text-muted">Event Date:</span>
-                            <span class="fw-semibold ms-1">@req.EventDate.ToString("dd MMM yyyy")</span>
+                            <span class="fw-semibold ms-1">@req.Event?.EventDate.ToString("dd MMM yyyy")</span>
+                        </p>
+                        <p class="small mb-2">
+                            <i class="bi bi-clock me-1 text-muted"></i>
+                            <span class="text-muted">Slot:</span>
+                            <span class="fw-semibold ms-1">@req.Event?.StartTime <span class="fw-semibold">to</span> @req.Event?.EndTime</span>
                         </p>
                         <p class="mb-2 small">
                             <i class="bi bi-send me-1 text-muted"></i>
@@ -79,7 +91,7 @@ else
 
                     <!-- Card Footer -->
                     <div class="card-footer bg-white border-top d-flex gap-2 py-3">
-                        <button class="btn btn-outline-primary btn-sm flex-fill" @onclick="() => OpenViewModal(req.Id)">
+                        <button class="btn btn-outline-primary btn-sm flex-fill" @onclick="() => OpenViewModal(req)">
                             <i class="bi bi-eye me-1"></i> View
                         </button>
                         <button class="btn btn-outline-success btn-sm flex-fill" @onclick="() => OpenApproveModal(req)">
@@ -124,8 +136,8 @@ else
 @if (showViewModal)
 {
     <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.5)">
-        <div class="modal-dialog modal-dialog-centered model-lg modal-dialog-scrollable">
-            <div class="modal-content border shadow">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow">
                 <div class="modal-header border-bottom">
                     <h6 class="modal-title fw-bold">Requisition Details</h6>
                     <button class="btn-close" @onclick="CloseAllModals"></button>
@@ -139,7 +151,7 @@ else
                             <p class="mb-0">Loading details...</p>
                         </div>
                     }
-                    else if (singleRequisitionDetails == null)
+                    else if (singleRequisitionDetail == null)
                     {
                         <p class="text-center text-muted">No details available.</p>
                     }
@@ -159,27 +171,27 @@ else
                         <!-- Subject + Dates -->
                         <div class="mb-4">
                             <p class="mb-1">
-                                <strong>Subject:</strong> @singleRequisitionDetails.Subject
+                                <strong>Subject:</strong> @singleRequisitionDetail.Subject
                             </p>
                             <p class="mb-1">
-                                <strong>Requested Date:</strong> @singleRequisitionDetails.RequestedDate.ToString("dd MMM yyyy")
+                                <strong>Requested Date:</strong> @singleRequisitionDetail.RequestedDate.ToString("dd MMM yyyy")
                             </p>
                             <p class="mb-0">
-                                <strong>Event Date:</strong> @singleRequisitionDetails.EventDate.ToString("dd MMM yyyy")
+                                <strong>Event Date:</strong> @singleRequisitionDetail.Event.EventDate.ToString("dd MMM yyyy")
                             </p>
                         </div>
 
                         <!-- Body -->
                         <div class="mb-4">
                             <p>Respected Sir,</p>
-                            <p style="white-space: pre-line;">@singleRequisitionDetails.Body</p>
+                            <p style="white-space: pre-line;">@singleRequisitionDetail.Body</p>
                         </div>
 
                         <!-- Requirements Table -->
-                        @if (singleRequisitionDetails.EventRequirements != null &&
-                                        singleRequisitionDetails.EventRequirements.Any())
+                        @if (singleRequisitionDetail.Event.Requirements != null &&
+                                        singleRequisitionDetail.Event.Requirements.Any())
                         {
-                            <strong>@singleRequisitionDetails.SocietyName Society need the following:</strong>
+                            <strong>@singleRequisitionDetail.Event?.Society?.Name Society need the following:</strong>
                             <div class="table-responsive mb-4 mt-2">
                                 <table class="table table-bordered align-middle">
                                     <thead class="table-light text-center">
@@ -192,7 +204,7 @@ else
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach (var r in singleRequisitionDetails.EventRequirements)
+                                        @foreach (var r in singleRequisitionDetail!.Event!.Requirements)
                                         {
                                             <tr>
                                                 <td>@r.Type</td>
@@ -207,8 +219,7 @@ else
                                         <tr>
                                             <td colspan="4" class="text-end fw-bold">Total Requested Amount:</td>
                                             <td class="text-end fw-bold text-primary">
-                                                @singleRequisitionDetails.EventRequirements.Sum(r => r.Quantity *
-                                    r.Price).ToString("N2")
+                                                @singleRequisitionDetail.Event.Requirements.Sum(r => r.Quantity * r.Price).ToString("N2")
                                             </td>
                                         </tr>
                                     </tfoot>
@@ -222,8 +233,8 @@ else
 
                         <!-- Signature -->
                         <div class="mt-5 pt-4 border-top">
-                            <p class="mb-1 fw-semibold">@singleRequisitionDetails.ChairpersonName</p>
-                            <p class="mb-4 text-muted">Chairperson (@singleRequisitionDetails.SocietyName)</p>
+                            <p class="mb-1 fw-semibold">@singleRequisitionDetail.ChairpersonName</p>
+                            <p class="mb-4 text-muted">Chairperson (@singleRequisitionDetail!.Event!.Society!.Name)</p>
                             <p class="mb-1 fw-semibold">Mr. Shahid Rashid</p>
                             <p class="text-muted">Assistant Director Student Affairs</p>
                         </div>
@@ -354,8 +365,8 @@ else
     private bool isLoadingDetails = false;
     private bool isActing = false;
 
-    private List<ViewRequisitionRequestDetailsDto> requisitionRequestDetails = new();
-    private EventRequisitionDetailsDto? singleRequisitionDetails;
+    private List<RequisitionDetailsForSA> requisitionDetails = new();
+    private RequisitionDetailsForSA? singleRequisitionDetail;
     private ApproveEventRequisitionDto approveRequisitionRequestDto = new() { AllocatedAmount = 0, BiitContribution = 0 };
 
     private string reviewMessage = string.Empty;
@@ -378,7 +389,7 @@ else
         try
         {
             var data = await StudentAffairsServices.GetRequisitionRequestDetails();
-            requisitionRequestDetails = data ?? new();
+            requisitionDetails = data ?? new();
         }
         catch (Exception ex)
         {
@@ -393,25 +404,24 @@ else
 
     // ── Modal Openers ────────────────────────────────────────
 
-    private async Task OpenViewModal(Guid requisitionId)
+    void OpenViewModal(RequisitionDetailsForSA req)
     {
         showViewModal = true;
-        isLoadingDetails = true;
-        singleRequisitionDetails = null;
+        singleRequisitionDetail = req;
 
-        try
-        {
-            var data = await StudentAffairsServices.ViewRequisitionRequestDetails(requisitionId);
-            singleRequisitionDetails = data;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error fetching details: {ex.Message}");
-        }
-        finally
-        {
-            isLoadingDetails = false;
-        }
+        // try
+        // {
+        //     var data = await StudentAffairsServices.ViewRequisitionRequestDetails(requisitionId);
+        //     singleRequisitionDetail = data;
+        // }
+        // catch (Exception ex)
+        // {
+        //     Console.WriteLine($"Error fetching details: {ex.Message}");
+        // }
+        // finally
+        // {
+        //     isLoadingDetails = false;
+        // }
     }
 
     private void OpenRejectModal(Guid requisitionId)
@@ -421,7 +431,7 @@ else
         showRejectModal = true;
     }
 
-    private void OpenApproveModal(ViewRequisitionRequestDetailsDto req)
+    private void OpenApproveModal(RequisitionDetailsForSA req)
     {
         activeRequisitionId = req.Id;
         activeRequestedAmount = req.RequestedAmount;
@@ -440,7 +450,7 @@ else
         showViewModal = false;
         showRejectModal = false;
         showApproveModal = false;
-        singleRequisitionDetails = null;
+        singleRequisitionDetail = null;
     }
 
     // ── Actions ──────────────────────────────────────────────

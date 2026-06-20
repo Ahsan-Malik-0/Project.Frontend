@@ -14,21 +14,21 @@ namespace Project.Frontend.StudentAffairsServices
             this.httpClient = httpClient;
         }
 
-        public async Task<List<ViewRequisitionRequestDetailsDto>> GetRequisitionRequestDetails()
+        public async Task<List<RequisitionDetailsForSA>?> GetRequisitionRequestDetails()
         {
             try
             {
                 var response = await httpClient.GetAsync("StudentAffairs/ViewPendingRequisitions");
                 if (!response.IsSuccessStatusCode)
-                    return new List<ViewRequisitionRequestDetailsDto>();
+                    return null;
 
-                var requisitionDetails = await response.Content.ReadFromJsonAsync<List<ViewRequisitionRequestDetailsDto>>();
+                var requisitionDetails = await response.Content.ReadFromJsonAsync<List<RequisitionDetailsForSA>>();
 
-                return requisitionDetails ?? new List<ViewRequisitionRequestDetailsDto>();
+                return requisitionDetails ?? null;
             }
             catch
             {
-                return new List<ViewRequisitionRequestDetailsDto>();
+                return null;
             }
         }
 
@@ -50,18 +50,16 @@ namespace Project.Frontend.StudentAffairsServices
             }
         }
 
-       
-
         // view Approved requisition details
-        public async Task<List<ViewRequisitionDetailsForStudentAffairsDto>?> ViewApprovedRequisitionDetails()
+        public async Task<List<EventRequisitionHistoryForSA>?> GetRequisitionHistory()
         {
             try
             {
-                var response = await httpClient.GetAsync($"StudentAffairs/ViewApprovedRequisitionDetails");
+                var response = await httpClient.GetAsync($"StudentAffairs/GetEventRequisitionHistory");
                 if (!response.IsSuccessStatusCode)
                     return null;
 
-                var requisitionDetails = await response.Content.ReadFromJsonAsync<List<ViewRequisitionDetailsForStudentAffairsDto>>();
+                var requisitionDetails = await response.Content.ReadFromJsonAsync<List<EventRequisitionHistoryForSA>>();
 
                 return requisitionDetails ?? null;
             }
