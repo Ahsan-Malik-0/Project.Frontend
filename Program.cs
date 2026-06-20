@@ -10,6 +10,7 @@ using Project.Frontend.PresidentServices;
 using Project.Frontend.SharedServices;
 using Project.Frontend.StudentAffairsServices;
 using Project.Frontend.FinanceServices;
+using Project.Frontend.Shared.Services;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -31,5 +32,6 @@ builder.Services.AddScoped<StudentAffairsServices>();
 builder.Services.AddScoped<AdminServices>();
 builder.Services.AddScoped<FinanceServices>();
 builder.Services.AddScoped<YearlyBudgetScrutinyServices>();
+builder.Services.AddScoped<ProfileServices>();
 
 await builder.Build().RunAsync();

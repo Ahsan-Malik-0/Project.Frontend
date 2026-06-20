@@ -77,8 +77,8 @@
 
                         <!-- Footer -->
                         <div class="card-footer bg-white border-top d-flex gap-2 py-3">
-                            <button class="btn btn-outline-primary btn-sm flex-fill"
-                                    @onclick="() => OpenViewModal(item.RequisitionId)">
+                            <button class="btn btn-outline-primary btn-sm flex-fill">
+                                    @* @onclick="() => OpenViewModal(item.RequisitionId)"> *@
                                 <i class="bi bi-eye me-1"></i> View Requisition
                             </button>
                             <button class="btn btn-outline-secondary btn-sm flex-fill"
@@ -525,25 +525,25 @@
     }
 
     // ── Modal Openers ────────────────────────────────────────
-    private async Task OpenViewModal(Guid requisitionId)
-    {
-        selectedRequisition = null;
-        showViewModal = true;
-        isLoadingDetails = true;
+    // private async Task OpenViewModal(Guid requisitionId)
+    // {
+    //     selectedRequisition = null;
+    //     showViewModal = true;
+    //     isLoadingDetails = true;
 
-        try
-        {
-            selectedRequisition = await chairpersonServices.GetRequisitionDetails(requisitionId);
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error loading requisition: {ex.Message}");
-        }
-        finally
-        {
-            isLoadingDetails = false;
-        }
-    }
+    //     try
+    //     {
+    //         selectedRequisition = await chairpersonServices.GetRequisitionDetails(requisitionId);
+    //     }
+    //     catch (Exception ex)
+    //     {
+    //         Console.WriteLine($"Error loading requisition: {ex.Message}");
+    //     }
+    //     finally
+    //     {
+    //         isLoadingDetails = false;
+    //     }
+    // }
 
     private async Task OpenAuditModal(EventRequisitionHistoryDto item)
     {

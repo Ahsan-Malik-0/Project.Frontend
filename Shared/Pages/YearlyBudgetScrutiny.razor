@@ -4,6 +4,7 @@
 @inject YearlyBudgetScrutinyServices scrutinyService
 @inject IJSRuntime JS
 
+<h4 class="fw-bold m-2">Yearly Budgets</h4>
 <!-- ===== LOADING ===== -->
 @if (isLoading)
 {
@@ -23,6 +24,7 @@ else
 {
     <!-- ===== BUDGET CARDS ===== -->
     <div class="row g-4">
+
         @foreach (var budget in yearlyBudgets)
         {
             bool isAllotted = budget.AllotedAmount > 0;
@@ -86,13 +88,13 @@ else
                             <!-- Row 1: View Comments + View Details (50/50) -->
                             <div class="col-6">
                                 <button class="btn btn-outline-secondary btn-sm w-100"
-                                        @onclick="() => OpenCommentsModal(budget)">
+                                        @onclick="() => OpenCommentsModal(budget)" disabled="@isAllotted">
+
                                     <i class="bi bi-chat-left-text me-1"></i> Comments
                                 </button>
                             </div>
                             <div class="col-6">
-                                <button class="btn btn-outline-primary btn-sm w-100"
-                                        @onclick="() => OpenDetailsModal(budget)">
+                                <button class="btn btn-outline-primary btn-sm w-100" @onclick="() => OpenDetailsModal(budget)">
                                     <i class="bi bi-eye me-1"></i> View Details
                                 </button>
                             </div>
@@ -101,8 +103,8 @@ else
                             @if (Role == "studentAffairs")
                             {
                                 <div class="col-12">
-                                    <button class="btn btn-success btn-sm w-100"
-                                            @onclick="() => OpenApproveModal(budget)">
+                                    <button class="btn btn-success btn-sm w-100" @onclick="() => OpenApproveModal(budget)"
+                                            disabled="@isAllotted">
                                         <i class="bi bi-check-circle me-1"></i> Approve Yearly Budget
                                     </button>
                                 </div>
@@ -139,7 +141,8 @@ else
                                 <div class="card-body">
                                     <p class="text-muted small text-uppercase fw-semibold mb-1"
                                        style="font-size:0.7rem;letter-spacing:0.06em;">Requested Amount</p>
-                                    <h5 class="fw-bold text-primary mb-1">Rs @activeBudget.RequestedAmount.ToString("N0")</h5>
+                                    <h5 class="fw-bold text-primary mb-1">Rs @activeBudget.RequestedAmount.ToString("N0")
+                                    </h5>
                                     <p class="text-muted mb-0" style="font-size:0.75rem;">
                                         @activeBudget.RequestedDate.ToString("dd MMM yyyy")
                                     </p>
@@ -152,7 +155,8 @@ else
                                     <p class="text-muted small text-uppercase fw-semibold mb-1"
                                        style="font-size:0.7rem;letter-spacing:0.06em;">Allotted Amount</p>
                                     <h5 class="fw-bold text-success mb-1">
-                                        @(activeBudget.AllotedAmount > 0 ? "Rs " + activeBudget.AllotedAmount.ToString("N0") : "—")
+                                        @(activeBudget.AllotedAmount > 0 ? "Rs " + activeBudget.AllotedAmount.ToString("N0")
+                                    : "—")
                                     </h5>
                                     <p class="text-muted mb-0" style="font-size:0.75rem;">
                                         @(activeBudget.AllotedDate != default
@@ -204,10 +208,10 @@ else
                                 bool isOpen = expandedEvents.Contains(ev.Id);
                                 <div class="accordion-item border mb-2 rounded shadow-sm overflow-hidden">
                                     <h2 class="accordion-header">
-                                        <button class="accordion-button @(isOpen ? "" : "collapsed") fw-semibold"
-                                                type="button"
+                                        <button class="accordion-button @(isOpen ? "" : "collapsed") fw-semibold" type="button"
                                                 @onclick="() => ToggleEvent(ev.Id)">
-                                            <div class="d-flex align-items-center justify-content-between w-100 flex-wrap gap-2 pe-2">
+                                            <div
+                                                class="d-flex align-items-center justify-content-between w-100 flex-wrap gap-2 pe-2">
                                                 <span>@ev.Name</span>
                                                 <div class="d-flex align-items-center gap-3 text-muted small fw-normal">
                                                     <span><i class="bi bi-calendar3 me-1"></i>@ev.EstimateMonth</span>
@@ -244,7 +248,9 @@ else
                                                                 </tr>
                                                             </thead>
                                                             <tbody>
-                                                                @{ int ri = 1; }
+                                                                @{
+                                                                    int ri = 1;
+                                                                }
                                                                 @foreach (var req in ev.YearlyEventRequirements)
                                                                 {
                                                                     <tr>
@@ -334,8 +340,7 @@ else
                                     </span>
                                     @if (isOwn)
                                     {
-                                        <button class="btn btn-link btn-sm text-danger p-0"
-                                                style="font-size:0.75rem;"
+                                        <button class="btn btn-link btn-sm text-danger p-0" style="font-size:0.75rem;"
                                                 @onclick="() => HandleDeleteComment(comment.Id)">
                                             <i class="bi bi-trash me-1"></i> Delete
                                         </button>
@@ -350,14 +355,11 @@ else
                 <!-- Write Comment -->
                 <div class="border-top p-3">
                     <div class="mb-2">
-                        <textarea class="form-control form-control-sm"
-                                  rows="3"
-                                  placeholder="Write a comment..."
+                        <textarea class="form-control form-control-sm" rows="3" placeholder="Write a comment..."
                                   @bind="newComment"></textarea>
                     </div>
                     <div class="d-flex justify-content-end">
-                        <button class="btn btn-primary btn-sm px-4"
-                                disabled="@isSendingComment"
+                        <button class="btn btn-primary btn-sm px-4" disabled="@isSendingComment"
                                 @onclick="HandleAddComment">
                             @if (isSendingComment)
                             {
@@ -397,9 +399,7 @@ else
                     <!-- Allotted Date (disabled, today) -->
                     <div class="mb-3">
                         <label class="form-label fw-semibold small">Allotted Date</label>
-                        <input class="form-control"
-                               value="@DateTime.Today.ToString("dd MMM yyyy")"
-                               disabled />
+                        <input class="form-control" value="@DateTime.Today.ToString("dd MMM yyyy")" disabled />
                         <div class="form-text text-muted">Auto-set to today's date.</div>
                     </div>
 
@@ -410,8 +410,7 @@ else
                         </label>
                         <div class="input-group">
                             <span class="input-group-text">Rs</span>
-                            <input type="number" class="form-control" min="0"
-                                   @bind="approveAllotedAmount"
+                            <input type="number" class="form-control" min="0" @bind="approveAllotedAmount"
                                    placeholder="0" />
                         </div>
                     </div>
@@ -419,9 +418,7 @@ else
                 </div>
                 <div class="modal-footer border-top">
                     <button class="btn btn-outline-secondary btn-sm" @onclick="CloseAllModals">Cancel</button>
-                    <button class="btn btn-success btn-sm px-4"
-                            disabled="@isActing"
-                            @onclick="HandleApprove">
+                    <button class="btn btn-success btn-sm px-4" disabled="@isActing" @onclick="HandleApprove">
                         @if (isActing)
                         {
                             <span class="spinner-border spinner-border-sm me-1"></span>

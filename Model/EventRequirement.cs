@@ -4,7 +4,7 @@ namespace Project.Frontend.Model
 {
     public class EventRequirement
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; }
         public required string Type { get; set; }
         public required string Name { get; set; }
 

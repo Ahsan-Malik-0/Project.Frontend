@@ -112,45 +112,5 @@ namespace Project.Frontend.AdminServices
                 return null!;
             }
         }
-
-
-        // Profile Details
-        public async Task<MemberProfileDto?> GetProfile(Guid memberId)
-        {
-            var response = await httpClient.GetAsync($"Admin/viewProfile/{memberId}");
-
-            if (!response.IsSuccessStatusCode)
-            {
-                return null;
-            }
-
-            var memberProfile = await response.Content.ReadFromJsonAsync<MemberProfileDto>();
-
-            return memberProfile;
-        }
-
-        // Edit Profile
-        public async Task<ResponseResult> UpdateProfile(UpdateMemberProfileDto updatedProfile)
-        {
-            try
-            {
-                var response = await httpClient.PutAsJsonAsync("Admin/updateProfile", updatedProfile);
-
-                if (!response.IsSuccessStatusCode)
-                {
-                    var resString = await response.Content.ReadAsStringAsync();
-                    var jsonNode = JsonNode.Parse(resString);
-                    var error = jsonNode?["errors"]?.ToString() ?? string.Empty;
-
-                    return new ResponseResult() { Success = false, Error = error };
-                }
-                return new ResponseResult() { Success = true };
-
-            }
-            catch (Exception ex)
-            {
-                return new ResponseResult() { Success = false, Error = ex.Message };
-            }
-        }
     }
 }

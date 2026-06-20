@@ -41,7 +41,7 @@ namespace Project.Frontend.Model.DTOs
         public required string Name { get; set; }
         public required string Username { get; set; }
         //public required string HashPassword { get; set; }
-        public string? Picture { get; set; }
+        public string? ProfileImage { get; set; }
         public Guid SocietyId { get; set; }
     }
 
@@ -63,7 +63,7 @@ namespace Project.Frontend.Model.DTOs
         //[Required(ErrorMessage = "NewHashPassword is required")]
         public string? NewHashPassword { get; set; }
 
-        public string? Picture { get; set; }
+        public string? ProfileImage { get; set; }
     }
 
     public class ViewMemberProfileDto

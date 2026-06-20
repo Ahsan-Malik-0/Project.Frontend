@@ -27,8 +27,9 @@ namespace Project.Frontend.PresidentServices
 
                 return events ?? new List<Event>();
             }
-            catch
+            catch(Exception ex)
             {
+                Console.WriteLine(ex.Message);
                 return new List<Event>();
             }
         }

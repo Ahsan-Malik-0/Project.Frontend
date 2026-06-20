@@ -19,7 +19,7 @@ namespace Project.Frontend.ChairpersonServices
 
         // Event Handling ---------------------------------------------------------------------
         // Get pending events
-        public async Task<List<Event>> GetPendingEvents(string memberId)
+        public async Task<List<Event>> GetPendingEvents(Guid memberId)
         {
             try
             {
@@ -158,7 +158,7 @@ namespace Project.Frontend.ChairpersonServices
 
         // Requisition Handling --------------------------------------------------------------
         // Get pending event requisition
-        public async Task<List<PendingEventRequisitionDto>> GetPendingRequisitions(Guid memberId)
+        public async Task<List<RequisitionDetailsForChairperson>> GetPendingRequisitions(Guid memberId)
         {
             try
             {
@@ -166,41 +166,55 @@ namespace Project.Frontend.ChairpersonServices
 
                 if (!response.IsSuccessStatusCode)
                 {
-                    return new List<PendingEventRequisitionDto>();
+                    return new List<RequisitionDetailsForChairperson>();
                 }
 
-                var pendingRequisitionDetails = await response.Content.ReadFromJsonAsync<List<PendingEventRequisitionDto>>();
+                var pendingRequisitionDetails = await response.Content.ReadFromJsonAsync<List<RequisitionDetailsForChairperson>>();
                 return pendingRequisitionDetails!;
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
-                return new List<PendingEventRequisitionDto>();
+                return new List<RequisitionDetailsForChairperson>();
             }
         }
 
         // Details for specific event requisition
-        public async Task<EventRequisitionDetailsDto?> GetRequisitionDetails(Guid requisitionId)
+        //public async Task<EventRequisitionDetailsDto?> GetRequisitionDetails(Guid requisitionId)
+        //{
+        //    try
+        //    {
+        //        var response = await httpClient.GetAsync($"ChairPerson/getEventRequisitionDetails/{requisitionId}");
+
+        //        if (!response.IsSuccessStatusCode)
+        //        {
+        //            return null;
+        //        }
+
+        //        var requisitionDetails = await response.Content.ReadFromJsonAsync<EventRequisitionDetailsDto>();
+        //        return requisitionDetails;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        Console.WriteLine(ex.Message);
+        //        return null;
+        //    }
+        //}
+
+        // Get requissition by id
+        public async Task<RequisitionDetailsForChairperson?> GetRequisitionDetailsById(Guid requisitionId)
         {
-            try
-            {
-                var response = await httpClient.GetAsync($"ChairPerson/getEventRequisitionDetails/{requisitionId}");
+            var response = await httpClient.GetAsync($"ChairPerson/getEventRequisitionById/{requisitionId}");
 
-                if (!response.IsSuccessStatusCode)
-                {
-                    return null;
-                }
-
-                var requisitionDetails = await response.Content.ReadFromJsonAsync<EventRequisitionDetailsDto>();
-                return requisitionDetails;
-            }
-            catch (Exception ex)
+            if (!response.IsSuccessStatusCode)
             {
-                Console.WriteLine(ex.Message);
                 return null;
             }
-        }
 
+            var chairpersonDetails = await response.Content.ReadFromJsonAsync<RequisitionDetailsForChairperson>();
+
+            return chairpersonDetails;
+        }
 
         // Get Chairperson details for event requisition
         public async Task<ChairpersonDetailsForRequisitionDto?> GetChairpersonDetailsForRequisition(Guid chairpersonId)
@@ -477,38 +491,24 @@ namespace Project.Frontend.ChairpersonServices
                 return new ResponseResult() { Success = false, Error = ex.Message };
             }
         }
-  
 
-        // Profile Details
-        public async Task<MemberProfileDto?> GetProfile(Guid memberId)
-        {
-            var response = await httpClient.GetAsync($"ChairPerson/viewProfile/{memberId}");
 
-            if (!response.IsSuccessStatusCode)
-            {
-                return null;
-            }
+        // Virtul Society ----------------------------------------
 
-            var memberProfile = await response.Content.ReadFromJsonAsync<MemberProfileDto>();
-
-            return memberProfile;
-        }
-
-        // Edit Profile
-        public async Task<ResponseResult> UpdateProfile(UpdateMemberProfileDto updatedProfile)
+        public async Task<ResponseResult> CreateVirtualSociety(CreateVirtualSocietyDto newVirtualSocietyDto)
         {
             try
             {
-                var response = await httpClient.PutAsJsonAsync($"ChairPerson/updateProfile/{updatedProfile.Id}", updatedProfile);
-
+                var response = await httpClient.PostAsJsonAsync("Task/createVirtualSociety", newVirtualSocietyDto);
                 if (!response.IsSuccessStatusCode)
                 {
                     var resString = await response.Content.ReadAsStringAsync();
                     var jsonNode = JsonNode.Parse(resString);
-                    var error = jsonNode?["errors"]?.ToString();
+                    var error = jsonNode?["errors"]?.ToString() ?? string.Empty;
 
                     return new ResponseResult() { Success = false, Error = error };
                 }
+
                 return new ResponseResult() { Success = true };
 
             }
@@ -518,36 +518,159 @@ namespace Project.Frontend.ChairpersonServices
             }
         }
 
-        public async Task<ViewMemberProfileDto?> GetPresidentProfile(Guid memberId)
+        public async Task<List<ListOfSocietiesDto>> ListOfSocieties()
         {
-            var response = await httpClient.GetAsync($"Chairperson/viewPresidentProfile/{memberId}");
+            try
+            {
+                var response = await httpClient.GetAsync($"Task/getAllSocieties");
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    return new List<ListOfSocietiesDto>();
+                }
+
+                var yearlyBudgets = await response.Content.ReadFromJsonAsync<List<ListOfSocietiesDto>>();
+                return yearlyBudgets ?? new List<ListOfSocietiesDto>();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return new List<ListOfSocietiesDto>();
+            }
+        }
+
+        public async Task<bool?> CheckSocietySelected(Guid memberId)
+        {
+            var response = await httpClient.GetAsync($"Task/checkSocietyExist/{memberId}");
 
             if (!response.IsSuccessStatusCode)
             {
                 return null;
             }
 
-            var profile = await response.Content.ReadFromJsonAsync<ViewMemberProfileDto>();
+            bool check = await response.Content.ReadFromJsonAsync<bool>();
 
-            return profile;
+            return check;
         }
 
-        public async Task<ResponseResult> UpdatePresidentProfile(Guid memberId, EditMemberProfileDto updatedProfile)
+        public async Task<ResponseResult> AddIdInVirtualSocietiesSociety(AddIdInVirtualSocietiesSocietyDto addIdInVirtualSocietiesSociety)
         {
             try
             {
-                var response = await httpClient.PutAsJsonAsync($"Chairperson/updatePresidentProfile/{memberId}", updatedProfile);
+                var response = await httpClient.PostAsJsonAsync("Task/createVirtualSocietyRequisition", addIdInVirtualSocietiesSociety);
+                if (!response.IsSuccessStatusCode)
+                {
+                    var resString = await response.Content.ReadAsStringAsync();
+                    var jsonNode = JsonNode.Parse(resString);
+                    var error = jsonNode?["errors"]?.ToString() ?? string.Empty;
+
+                    return new ResponseResult() { Success = false, Error = error };
+                }
+
+                return new ResponseResult() { Success = true };
+
+            }
+            catch (Exception ex)
+            {
+                return new ResponseResult() { Success = false, Error = ex.Message };
+            }
+        }
+
+        public async Task<VirtualSociety?> GetLatestVirtualSociety()
+        {
+            var response = await httpClient.GetAsync($"Task/getVirtualSocietyDetails");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            var virtualSociety = await response.Content.ReadFromJsonAsync<VirtualSociety>();
+
+            return virtualSociety;
+        }
+
+        public async Task<ResponseResult> CreateVirtualSocietyRequisition(CreateVirtualSocietyRequisitionDto newRequisition)
+        {
+            try
+            {
+                var response = await httpClient.PostAsJsonAsync("Task/createVirtualSocietyRequisition", newRequisition);
+                if (!response.IsSuccessStatusCode)
+                {
+                    var resString = await response.Content.ReadAsStringAsync();
+                    var jsonNode = JsonNode.Parse(resString);
+                    var error = jsonNode?["errors"]?.ToString() ?? string.Empty;
+
+                    return new ResponseResult() { Success = false, Error = error };
+                }
+
+                return new ResponseResult() { Success = true };
+
+            }
+            catch (Exception ex)
+            {
+                return new ResponseResult() { Success = false, Error = ex.Message };
+            }
+        }
+
+        public async Task<List<Event>> GetPendingVirtualSocietyEvents(Guid virtualSocietyId)
+        {
+            try
+            {
+                var respnse = await httpClient.GetAsync($"president/getPendingVirtualSocietyEvents/{virtualSocietyId}");
+
+                if (!respnse.IsSuccessStatusCode)
+                    return new List<Event>();
+
+                var virtualSocietyEvents = await respnse.Content.ReadFromJsonAsync<List<Event>>();
+
+                return virtualSocietyEvents ?? new List<Event>();
+            }
+            catch
+            {
+                return new List<Event>();
+            }
+        }
+
+        public async Task<ResponseResult> CreateVirtualSocietyEvents(AddEventDto newEvent)
+        {
+            try
+            {
+                var response = await httpClient.PostAsJsonAsync("Task/createVirtualSocietyEvent", newEvent);
 
                 if (!response.IsSuccessStatusCode)
                 {
                     var resString = await response.Content.ReadAsStringAsync();
                     var jsonNode = JsonNode.Parse(resString);
-                    var error = jsonNode?["errors"]?.ToString();
+                    var error = jsonNode?["errors"]?.ToString() ?? string.Empty;
+
+                    return new ResponseResult() { Success = false, Error = error };
+                }
+
+                return new ResponseResult() { Success = true };
+
+            }
+            catch (Exception ex)
+            {
+                return new ResponseResult() { Success = false, Error = ex.Message };
+            }
+        }
+
+        public async Task<ResponseResult> DeleteVirtualSocietyEventEvent(Guid eventId)
+        {
+            try
+            {
+                var response = await httpClient.DeleteAsync($"Task/deleteVirtualSocietyEvent/{eventId}");
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var resString = await response.Content.ReadAsStringAsync();
+                    var jsonNode = JsonNode.Parse(resString);
+                    var error = jsonNode?["errors"]?.ToString() ?? string.Empty;
 
                     return new ResponseResult() { Success = false, Error = error };
                 }
                 return new ResponseResult() { Success = true };
-
             }
             catch (Exception ex)
             {

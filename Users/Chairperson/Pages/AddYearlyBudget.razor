@@ -29,14 +29,12 @@
 
                         <!-- Requested Amount -->
                         <div class="mb-3">
-                            <label class="form-label fw-semibold small">Requested Amount <span class="text-danger">*</span></label>
+                            <label class="form-label fw-semibold small">Requested Amount</label>
                             <div class="input-group">
                                 <span class="input-group-text">Rs</span>
-                                <InputNumber class="form-control"
-                                             @bind-Value="newBudget.RequestedAmount"
-                                             placeholder="0.00" />
+                                <input class="form-control" value="@totalEstimatedAmount" disabled />
                             </div>
-                            <ValidationMessage For="@(() => newBudget.RequestedAmount)" class="text-danger small" />
+                            <div class="form-text text-muted">Auto-filled based on estimated event costs.</div>
                         </div>
 
                         <!-- Requested Date -->
@@ -357,6 +355,9 @@
 
 @code {
 
+    //  ── Variables ─────────────────────────────────
+    private decimal totalEstimatedAmount => addedEvents.Sum(e => e.EstimateAmount ?? 0);
+
     // ── Budget ──────────────────────────────────────────────
     private CreateYearlyBudgetDto newBudget = new()
     {
@@ -542,6 +543,7 @@
         if (eventEditIndex.HasValue || reqEditIndex.HasValue) return;
 
         newBudget.YearlyEvents = addedEvents;
+        newBudget.RequestedAmount = totalEstimatedAmount;
         isSubmitting = true;
 
         try

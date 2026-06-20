@@ -20,19 +20,38 @@
 
                 <div class="card-body">
                     <div class="mb-3">
-                        <label class="form-label">Event Name</label>
+                        <label class="form-label  fw-semibold">Event Name:</label>
                         <input class="form-control"
                                type="text"
                                @bind="event_name" />
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label">Event Date</label>
+                        <label class="form-label  fw-semibold">Event Date:</label>
                         <input class="form-control"
                                type="date"
                                @bind="event_date" />
                     </div>
 
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Event Time:</label>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label text-muted">From</label>
+                                <input class="form-control"
+                                       type="time" 
+                                       @bind="startTime" />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label text-muted">To</label>
+                                <input class="form-control"
+                                       type="time" 
+                                       @bind="endTime" />
+                            </div>
+                        </div>
+                    </div>
 
                     @if (!string.IsNullOrEmpty(eventError))
                     {
@@ -284,7 +303,9 @@
             }
 
             event_name = @event.Name;
-            event_date = @event.Date;
+            event_date = @event.EventDate;
+            startTime = TimeOnly.FromTimeSpan(@event.StartTime);
+            endTime = TimeOnly.FromTimeSpan(@event.EndTime);
 
             requirements.Clear();
             foreach (var requirement in @event.Requirements)
@@ -311,6 +332,12 @@
 
     private string event_name = "";
     private DateTime event_date = DateTime.Now; // Fixed: Use FromDateTime static method
+
+    // --- FIX: Use TimeOnly for time fields to match <input type="time"> binding ---
+    private TimeOnly startTime = new TimeOnly(12, 0, 0);
+    private TimeOnly endTime = new TimeOnly(12, 0, 0);
+    // --- END FIX ---
+
     private string req_type = "financial";
     private string req_name = "";
     private string main_type = "LTs";
@@ -323,6 +350,34 @@
     private EventRequirementDto? selectedRequirement;
 
     List<EventRequirementDto> requirements = new();
+
+    private string HandleTime()
+    {
+        Console.WriteLine(startTime.ToTimeSpan());
+        Console.WriteLine(endTime.ToTimeSpan());
+
+        if (startTime.ToTimeSpan() > endTime.ToTimeSpan())
+        {
+            Console.WriteLine("Incorrect Time");
+            return("Incorrect Time");
+        }
+        else if (startTime.ToTimeSpan().Hours == endTime.ToTimeSpan().Hours)
+        {
+            Console.WriteLine("Event time must be at least 1 hour");
+            Console.WriteLine(startTime.ToTimeSpan().Hours == endTime.ToTimeSpan().Hours);
+            return("Event duration must be at least 1 hour");
+        }
+        else if (startTime.ToTimeSpan().Add(TimeSpan.FromHours(1)).Hours == endTime.ToTimeSpan().Hours && (startTime.ToTimeSpan().Minutes + endTime.ToTimeSpan().Minutes) < 60)
+        {
+            Console.WriteLine("Event time must be at least 1 hour");
+            Console.WriteLine((startTime.ToTimeSpan().Minutes + endTime.ToTimeSpan().Minutes));
+            return("Event duration must be at least 1 hour");
+        }
+        else
+        {
+            return null!;
+        }
+    }
 
 
     private async Task HandleSubmit()
@@ -347,13 +402,19 @@
             eventError = "Invalid Date";
             return;
         }
+
+        string TimeError = HandleTime();
+        if (!String.IsNullOrEmpty(TimeError))
+        {
+            eventError = TimeError;
+            return;
+        }
+
         if(isEditMode)
         {
             reqError = "Update Requirement First";
             return;
         }
-
-
 
         if (isEventEditMode)
         {
@@ -361,7 +422,9 @@
             {
                 Id = EventId!.Value,
                 Name = event_name,
-                Date = event_date,
+                StartTime = startTime.ToTimeSpan(),
+                EndTime = endTime.ToTimeSpan(),
+                EventDate = event_date,
                 Requirements = requirements
             };
 
@@ -392,7 +455,9 @@
             var dto = new AddEventDto()
             {
                 Name = event_name,
-                Date = event_date,
+                EventDate = event_date,
+                StartTime = startTime.ToTimeSpan(),
+                EndTime = endTime.ToTimeSpan(),
                 SocietyId = societyId.Value,
                 Requirements = requirements
             };
@@ -462,8 +527,6 @@
         ClearForm();
     }
 
-
-
     private void HandleEdit(EventRequirementDto req)
     {
         selectedRequirement = req;
@@ -473,8 +536,6 @@
         req_price = req.Price;
         isEditMode = true;
     }
-
-
 
     private async Task HandleDelete(EventRequirementDto req)
     {

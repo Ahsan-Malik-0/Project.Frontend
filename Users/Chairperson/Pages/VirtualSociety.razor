@@ -1,0 +1,141 @@
+﻿@page "/chairperson/createVirtualSociety"
+
+@layout ChairpersonLayout
+
+@attribute [Authorize(Roles = "chairperson")]
+
+<h1>Create Society</h1>
+
+<label>Society Name</label>
+<input type="text" @bind="societyName" @value="societyName"/>
+
+
+
+@if (societies.Count == 0)
+{
+    <div class="text-center py-5">
+        <p class="text-muted fs-5">No Society available</p>
+    </div>
+}
+else
+{
+    <h3>Total Societies</h3>
+
+    <select class="form-select" @bind="selectedSocietyId">
+        <option value="" tabindex="">Select Societies</option>
+        @foreach (var option in societies!)
+        {
+            <option value="@option.SocietyId">@option.SocietyName</option>
+        }
+    </select>
+
+    <button class="btn btn-sm btn-primary" @onclick="HandleSociety">Add Society</button>
+    @* <table class="table table-hover table-bordered">
+        <tr>
+            <td>Name</td>
+            <td>Add Society</td>
+        </tr>
+        @foreach (var option in societies)
+        {
+        <tr>
+            <td>@option.SocietyName</td>
+        </tr>
+        }
+    </table> *@
+    
+   
+
+    <h3>Selected Societies</h3>
+    @foreach (var option in selectedSocieteisList!)
+    {
+        <ul>
+            <li>@option.SocietyId</li>
+            <li>@option.SocietyName</li>
+        </ul>
+    }
+    
+}
+
+<button class="btn btn-sm btn-primary" @onclick="HandleCreateSociety">Create Society</button>
+
+
+@inject ChairpersonServices chairpersonServices
+@inject IJSRuntime jSRuntime
+@code {
+    private List<ListOfSocietiesDto> societies = new();
+
+    private List<ListOfSocietiesDto> selectedSocieteisList = new()!;
+
+    private string? selectedSocietyName;
+    private string? societyName;
+    private Guid? selectedSocietyId;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        try
+        {
+            societies = await chairpersonServices.ListOfSocieties();
+            if(societies == null)
+            {
+                await jSRuntime.InvokeVoidAsync("alert", "Something went wrong.");
+            }
+        }
+        catch(Exception ex)
+        {
+            await jSRuntime.InvokeVoidAsync("alert", $"Something went wrong. {ex}");
+        }
+    }
+
+
+    private async Task HandleSociety()
+    {
+        if (selectedSocietyId == null)
+        {
+            await jSRuntime.InvokeVoidAsync("alert", "Add society id.");
+            return;
+        }
+
+        var removesociety = societies.Where(s => s.SocietyId == selectedSocietyId).FirstOrDefault();
+        societies.Remove(removesociety!);
+        selectedSocieteisList.Add(removesociety!);
+
+        // selectedSocietyName = "";
+        // societyName = "";
+        // selectedSocietyId = Guid.Empty;
+    }
+
+    private async Task HandleCreateSociety()
+    {
+        List<Guid> onlyIdSocieties = selectedSocieteisList.Select(s => s.SocietyId).ToList();
+
+        if (societyName == null)
+        {
+            await jSRuntime.InvokeVoidAsync("alert", "Society name can not be null.");
+            return;
+        }
+
+        // AddIdInVirtualSocietiesSocietyDto ids = new AddIdInVirtualSocietiesSocietyDto()
+        // {
+        //     SocietyIds = onlyIdSocieties
+        // };
+
+        var CreateVirtualSociety = new CreateVirtualSocietyDto()
+            {
+                Name = societyName,
+                SocietyIds = onlyIdSocieties
+            };
+
+        var response = await chairpersonServices.CreateVirtualSociety(CreateVirtualSociety);
+
+        if (response.Success)
+        {
+              await jSRuntime.InvokeVoidAsync("alert", "Society added successfully.");
+              await OnInitializedAsync();
+         
+        }
+        else
+        {
+            await jSRuntime.InvokeVoidAsync("alert", $"Failed to added: {response.Error}");
+        }
+    }
+}

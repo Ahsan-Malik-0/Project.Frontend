@@ -1,0 +1,422 @@
+﻿@* @page "/chairperson/create-requisition"
+@layout ChairpersonLayout
+@using Microsoft.AspNetCore.Components
+@attribute [Authorize(Roles = "chairperson")] *@
+
+<div class="container py-5">
+
+    <!-- ================= FORM SECTION ================= -->
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8 col-sm-12">
+            <div class="card shadow border rounded-4">
+                <div class="card-body p-4">
+                    <h4 class="text-center fw-bold mb-4">Create Requisition</h4>
+
+                    <EditForm Model="requisitionDto" OnValidSubmit="HandleSubmit">
+                        <DataAnnotationsValidator />
+
+                        <!-- Subject -->
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Subject</label>
+                            <input @bind-Value="requisitionDto.Subject"
+                                   @bind-Value:event="oninput"
+                                   class="form-control form-control"
+                                   placeholder="Enter requisition subject" />
+                            <ValidationMessage For="@(() => requisitionDto.Subject)" class="text-danger small" />
+                        </div>
+
+                        <!-- Body -->
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Application Body</label>
+                            <textarea @bind-Value="requisitionDto.Body"
+                                      @bind-Value:event="oninput"
+                                      rows="5"
+                                      class="form-control"
+                                      placeholder="Write application content here..." />
+                            <ValidationMessage For="@(() => requisitionDto.Body)" class="text-danger small" />
+                        </div>
+
+                        <div class="d-flex flex-column flex-md-row justify-content-end gap-4 mt-4">
+                            <button class="btn btn-outline-secondary w-100 w-md-auto" @onclick="HandleCancel">
+                                Cancel Requisition
+                            </button>
+                            <button type="submit" class="btn btn-success w-100 w-md-auto">
+                                Submit Requisition
+                            </button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= APPLICATION PREVIEW ================= -->
+    <div class="row justify-content-center mt-5">
+        <div class="col-lg-10">
+
+            <div class="card shadow-lg border rounded-4">
+                <div class="card-body p-5" id="application">
+
+                    <!-- Header -->
+                    <div class="d-flex align-items-center gap-4 border-bottom pb-3 mb-4">
+                        <img src="/images/biit_logo.png"
+                             alt="BIIT Logo"
+                             style="max-width:80px;" />
+                        <div>
+                            <h4 class="fw-bold mb-0">Barani Institute Of Information Technology</h4>
+                            <small class="text-muted">Official Event Requisition Application</small>
+                        </div>
+                    </div>
+
+                    <!-- Subject + Date -->
+                    <div class="mb-4">
+                        <p class="mb-1">
+                            <strong>Subject:</strong>
+                            @(string.IsNullOrWhiteSpace(requisitionDto.Subject)
+                                                        ? "__________________________"
+                                                        : requisitionDto.Subject)
+                        </p>
+
+                        <p class="mb-1">
+                            <strong>Requested Date:</strong>
+                            @(requestedDate.ToString("dd MMM yyyy"))
+                        </p>
+                        @* <p class="mb-0">
+                            <strong>Event Date:</strong>
+                            @(event_date.ToString("dd MMM yyyy"))
+                        </p> *@
+                    </div>
+
+                    <!-- Body -->
+                    <div class="mb-4">
+                        <p>Respected Sir,</p>
+
+                        <p style="white-space: pre-line;">
+                            @(string.IsNullOrWhiteSpace(requisitionDto.Body)
+                                                        ? "(Application body will appear here...)"
+                                                        : requisitionDto.Body)
+                        </p>
+                    </div>
+
+                    <!-- Requirements Table -->
+                    <div class="mt-2 pt-4 border-top">
+                        @if (events.Any())
+                        {
+                            @foreach (var _event in events)
+                            {
+                                <div class="bg-light w-100 p-2 border mb-2">
+                                    <div class="d-flex justify-content-between align-item-center">
+                                        <p class="my-auto m-0">@_event.Name</p>
+                                        <div class="d-flex flex-row gap-2">
+                                            <button class="btn btn-sm btn-primary" @onclick="() => HandleShowDetails(_event)">Details</button>
+                                            @if (addedEvents.Contains(_event))
+                                            {
+                                                <button class="btn btn-sm btn-danger" @onclick="() => HandleRemovedEvents(_event)">Remove</button>
+                                            }
+                                            else
+                                            {
+                                                <button class="btn btn-sm btn-success" @onclick="() => HandleAddedEvents(_event)">Add</button>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+
+                    <!-- Signature Section -->
+                    <div class="mt-4 pt-4 border-top">
+                        <p class="mb-1 fw-semibold">
+                            @* @chairpersonName *@
+                        </p>
+                        <p class="mb-4 text-muted">
+                            @* @chairpersonRole (@chairpersonSocietyName) *@
+                        </p>
+
+                        <p class="mb-1 fw-semibold">
+                            Mr. Shahid Rashid
+                        </p>
+                        <p class="text-muted">
+                            Assistant Director Student Affairs
+                        </p>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<!-- ===== MODAL: View Details ===== -->
+@if (showViewDetails)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.5)">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-light border-bottom">
+                    <h5 class="modal-title fw-bold">
+                        @selectedEvent?.Name
+                    </h5>
+
+                    <button type="button"
+                            class="btn-close"
+                            @onclick="CloseAllModals">
+                    </button>
+                </div>
+
+                <div class="modal-body p-4">
+
+                    <!-- Event Information -->
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-body">
+
+                            <div class="row g-3">
+
+                                <div class="col-md-6">
+                                    <div class="text-muted small">
+                                        Event Date
+                                    </div>
+
+                                    <div class="fw-semibold fs-6">
+                                        <i class="bi bi-calendar-event me-2"></i>
+
+                                        <span class="@(selectedEvent?.EventDate < DateTime.Now ? "text-danger" : "")">
+                                            @selectedEvent?.EventDate.ToString("dd MMM yyyy")
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="text-muted small">
+                                        Time Slot
+                                    </div>
+
+                                    <div class="fw-semibold fs-6">
+                                        <i class="bi bi-clock me-2"></i>
+                                        @selectedEvent?.StartTime -
+                                        @selectedEvent?.EndTime
+                                    </div>
+                                </div>
+
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- Requirements -->
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="fw-bold mb-0">
+                            Requirements
+                        </h6>
+
+                        <span class="badge bg-primary">
+                            @(selectedEvent?.Requirements?.Count ?? 0) Items
+                        </span>
+                    </div>
+
+                    @if (selectedEvent?.Requirements?.Any() == true)
+                    {
+                        <div class="table-responsive">
+
+                            <table class="table table-hover align-middle border">
+
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Name</th>
+                                        <th class="text-center">Qty</th>
+                                        <th class="text-end">Unit Price</th>
+                                        <th class="text-end">Amount</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    @foreach (var req in selectedEvent.Requirements)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <span class="badge @(req.Type == "financial" ? "bg-success" : "bg-warning text-dark")">
+                                                    @req.Type
+                                                </span>
+                                            </td>
+
+                                            <td>@req.Name</td>
+
+                                            <td class="text-center">
+                                                @req.Quantity
+                                            </td>
+
+                                            <td class="text-end">
+                                                Rs. @req.Price
+                                            </td>
+
+                                            <td class="text-end fw-semibold">
+                                                Rs. @(req.Price* req.Quantity)
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                        <div class="card bg-light border-0 mt-3">
+                            <div class="card-body py-3">
+
+                                <div class="d-flex justify-content-between align-items-center">
+
+                                    <span class="fw-semibold fs-5">
+                                        Total Cost
+                                    </span>
+
+                                    <span class="fw-bold fs-4 text-primary">
+                                        Rs. @(selectedEvent.Requirements.Sum(r => r.Price * r.Quantity))
+                                    </span>
+
+                                </div>
+
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-light text-center border">
+                            No requirements available.
+                        </div>
+                    }
+
+                </div>
+
+                <div class="modal-footer bg-light border-top">
+                    <button class="btn btn-outline-secondary"
+                            @onclick="CloseAllModals">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+
+
+@inject ChairpersonServices chairpersonServices
+@inject ClaimServices claimServices
+@inject NavigationManager nav
+@inject IJSRuntime JS
+@code {
+    [SupplyParameterFromQuery(Name = "id")]
+    public Guid? EventId { get; set; }
+
+    public Guid chairpersonId { get; set; }
+    public string chairpersonName = "";
+    public string chairpersonRole = "";
+    public string chairpersonSocietyName = "";
+
+    private List<Event> events = new();
+    private Event? selectedEvent;
+    private List<Event> addedEvents = new();
+
+    private DateTime requestedDate = DateTime.Now;
+    private List<EventRequirementDto> requirements = new();
+    private decimal TotalRequestedAmount =>
+        requirements.Sum(r => r.Quantity * r.Price);
+    private CreateEventRequisitionDto requisitionDto = new()
+    {
+        Subject = string.Empty,
+        Body = string.Empty,
+        RequestedDate = DateTime.Now,
+        RequestedAmount = 0,
+        EventIds = null
+    };
+
+
+    // Models
+    private bool showViewDetails;
+
+    void CloseAllModals()
+    {
+        showViewDetails = false;
+    }
+
+    void HandleShowDetails(Event ev)
+    {
+        showViewDetails = true;
+        selectedEvent = ev;
+    }
+
+    void HandleAddedEvents(Event ev)
+    {
+        addedEvents.Add(ev);
+    }
+
+    void HandleRemovedEvents(Event ev)
+    {
+        addedEvents.Remove(ev);
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await JS.InvokeVoidAsync("alert", $"{EventId}");
+
+        // Get chairperson id to get details for requisition form
+        var claims = await claimServices.GetClaims();
+        chairpersonId = Guid.Parse(claims.Id);
+        chairpersonRole = claims.Role;
+
+        var chaiperson = await chairpersonServices.GetChairpersonDetailsForRequisition(chairpersonId);
+        if (chaiperson == null)
+        {
+            await JS.InvokeVoidAsync("alert", "Chairperson not found");
+            return;
+        }
+
+        chairpersonName = chaiperson.ChairpersonName!;
+        chairpersonSocietyName = chaiperson.SocietyName!;
+
+
+        try
+        {
+            events = (await chairpersonServices.GetPendingEvents(chairpersonId))
+            .OrderByDescending(e => e.EventDate.Date)
+            .ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("Error:", ex);
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        requisitionDto.RequestedDate = requestedDate;
+        requisitionDto.RequestedAmount = TotalRequestedAmount;
+        requisitionDto.EventIds = addedEvents.Select(s => s.Id).ToList();
+
+        var response = await chairpersonServices.CreateRequisition(requisitionDto);
+
+        if (response.Success)
+        {
+            await JS.InvokeVoidAsync("alert", "Requisition Created Successfully");
+            // await JS.InvokeVoidAsync("alert", "Hello");
+            nav.NavigateTo("/chairperson");
+        }
+        else
+        {
+            await JS.InvokeVoidAsync("alert", $"Unable to Create Requisition due to {response.Error}");
+            nav.NavigateTo("/chairperson/events-requests");
+        }
+
+    }
+
+    private async Task HandleCancel()
+    {
+        var response = await JS.InvokeAsync<bool>("confirm", "Are you sure, you want to cancel requisition");
+
+        if (response)
+            nav.NavigateTo("chairperson/events-requests");
+    }
+}

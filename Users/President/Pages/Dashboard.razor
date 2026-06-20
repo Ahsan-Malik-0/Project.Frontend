@@ -28,7 +28,7 @@ else
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="card-title fw-bold h5 m-0">@_event.Name:</h5>
 
-                        @if (!string.IsNullOrEmpty(_event.Message))
+                        @if (!string.IsNullOrEmpty(_event.ReviewMessage))
                         {
                             <buton class="bi-envelope fs-5 text-danger"
                             data-bs-toggle="modal"
@@ -39,15 +39,20 @@ else
                     </div>
                     <div class="card-body d-flex flex-column">
 
-                        <p class="mb-1 text-muted">
-                            Date:
-                            <span class="@( _event.Date < DateTime.Now ? "text-danger" : "")">
-                                @_event.Date.ToString("dd MMM yyyy")
+                        <p class="mb-1">
+                            <span class="fw-semibold"> Date: </span>
+                            <span class="@( _event.EventDate < DateTime.Now ? "text-danger" : "")">
+                                @_event.EventDate.ToString("dd MMM yyyy")
                             </span>
                         </p>
 
-                        <p class="mb-3 text-muted">
-                            Status:
+                        <p class="mb-1">
+                            <span class="fw-semibold"> Slot: </span>
+                            <span>@_event.StartTime <span class="fw-semibold">to</span> @_event.EndTime</span>
+                        </p>
+
+                        <p class="mb-3">
+                            <span class="fw-semibold"> Status: </span>
                             <span class="text-warning">
                                 @_event.Status
                             </span>
@@ -141,7 +146,7 @@ else
                         </div>
 
                         <div class="modal-body text-center">
-                            <p>@_event.Message</p>
+                            <p>@_event.ReviewMessage</p>
                         </div>
                     </div>
                 </div>
@@ -171,7 +176,7 @@ else
         try
         {
             events = (await presidentServices.GetPendingEvents(id))
-            .OrderByDescending(e => e.Date.Date)
+            .OrderByDescending(e => e.EventDate.Date)
             .ToList();
         }
         catch (Exception ex)

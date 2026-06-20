@@ -4,6 +4,9 @@
 
 @attribute [Authorize(Roles = "chairperson")]
 
+
+<h4 class="fw-bold mb-3">Pending Requisitions:</h4>
+
 @if (loading)
 {
     <div class="text-center py-5">
@@ -19,7 +22,6 @@ else if (pendingEventRequisitions.Count == 0)
 }
 else
 {
-    <h4 class="fw-bold mb-3">Pending Requisitions:</h4>
     <div class="row g-4">
         @foreach (var pr in pendingEventRequisitions)
         {
@@ -32,7 +34,7 @@ else
                     <!-- Header -->
                     <div class="card-header">
                         <div class="d-flex justify-content-between align-items-center">
-                            <h6 class="fw-bold mb-0">@pr.EventName</h6>
+                            <h6 class="fw-bold mb-0">@pr.Event.Name</h6>
                             <span class="badge @GetStatusBadgeClass(pr.Status)">
                                 @pr.Status
                             </span>
@@ -40,8 +42,12 @@ else
                     </div>
 
                     <div class="card-body d-flex flex-column">
+                        <p class="text-muted small mb-1">
+                            <strong>Event Date:</strong> @pr.Event.EventDate.ToString("dd MMM yyyy")
+                        </p>
                         <p class="text-muted small mb-3">
-                            <strong>Event Date:</strong> @pr.EventDate.ToString("dd MMM yyyy")
+                            <strong> Slot: </strong>
+                            @pr.Event.StartTime <span class="fw-semibold">to</span> @pr.Event.EndTime
                         </p>
 
                         <!-- Action Buttons -->
@@ -55,7 +61,7 @@ else
                                 </button>
 
                                 <button class="btn btn-sm btn-primary w-50"
-                                        @onclick="() => OpenViewModal(pr.Id)">
+                                        @onclick="() => OpenViewModal(pr)">
                                     <i class="bi bi-eye me-1"></i> View
                                 </button>
                             </div>
@@ -169,7 +175,7 @@ else
 @if (showViewModal)
 {
     <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.5)">
-        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content border-0 shadow">
                 <div class="modal-header border-bottom">
                     <h6 class="modal-title fw-bold">Requisition Details</h6>
@@ -199,7 +205,11 @@ else
                         <div class="mb-4">
                             <p class="mb-1"><strong>Subject:</strong> @selectedRequisition.Subject</p>
                             <p class="mb-1"><strong>Requested Date:</strong> @selectedRequisition.RequestedDate.ToString("dd MMM yyyy")</p>
-                            <p class="mb-0"><strong>Event Date:</strong> @selectedRequisition.EventDate.ToString("dd MMM yyyy")</p>
+                            <p class="mb-1"><strong>Event Date:</strong> @selectedRequisition.Event.EventDate.ToString("dd MMM yyyy")</p>
+                            <p class="mb-1">
+                                <span class="fw-semibold"> Slot: </span>
+                                <span>@selectedRequisition.Event.StartTime <span class="fw-semibold">to</span> @selectedRequisition.Event.EndTime</span>
+                            </p>
                         </div>
 
                         <!-- Body -->
@@ -209,9 +219,9 @@ else
                         </div>
 
                         <!-- Requirements -->
-                        @if (selectedRequisition.EventRequirements != null && selectedRequisition.EventRequirements.Any())
+                        @if (selectedRequisition.Event.Requirements != null && selectedRequisition.Event.Requirements.Any())
                         {
-                            <strong>@selectedRequisition.SocietyName Society need the following:</strong>
+                            <strong>@selectedRequisition?.Event?.Society?.Name Society need the following:</strong>
                             <div class="table-responsive mb-4 mt-2">
                                 <table class="table table-bordered align-middle">
                                     <thead class="table-light text-center">
@@ -224,7 +234,7 @@ else
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach (var req in selectedRequisition.EventRequirements)
+                                        @foreach (var req in selectedRequisition!.Event.Requirements)
                                         {
                                             <tr>
                                                 <td>@req.Type</td>
@@ -252,9 +262,9 @@ else
                         }
 
                         <!-- Signature -->
-                        <div class="mt-5 pt-4 border-top">
+                        <div class="mt-3 pt-4 border-top">
                             <p class="mb-1 fw-semibold">@selectedRequisition.ChairpersonName</p>
-                            <p class="mb-4 text-muted">Chairperson (@selectedRequisition.SocietyName)</p>
+                            <p class="mb-4 text-muted">Chairperson (@selectedRequisition?.Event?.Society?.Name)</p>
                             <p class="mb-1 fw-semibold">Mr. Shahid Rashid</p>
                             <p class="text-muted">Assistant Director Student Affairs</p>
                         </div>
@@ -279,10 +289,11 @@ else
     private bool loading = false;
     private Guid Id;
 
-    private List<PendingEventRequisitionDto> pendingEventRequisitions = new();
-    private EventRequisitionDetailsDto? selectedRequisition = null;
+    private List<RequisitionDetailsForChairperson> pendingEventRequisitions = new();
+    private RequisitionDetailsForChairperson? selectedRequisition = null;
     private decimal TotalRequestedAmount =>
-        selectedRequisition?.EventRequirements.Sum(r => r.Price * r.Quantity) ?? 0;
+    //     pendingEventRequisitions.;
+            selectedRequisition!.Event.Requirements.Sum(r => r.Price * r.Quantity);
 
     // ── Modal state ──────────────────────────────────────────
     private bool showStatusModal = false;
@@ -325,18 +336,10 @@ else
         showReviewModal = true;
     }
 
-    private async Task OpenViewModal(Guid requisitionId)
+    void OpenViewModal(RequisitionDetailsForChairperson requisition)
     {
-        selectedRequisition = null;
+        selectedRequisition = requisition;
         showViewModal = true;
-        try
-        {
-            selectedRequisition = await chairpersonServices.GetRequisitionDetails(requisitionId);
-        }
-        catch
-        {
-            await JS.InvokeVoidAsync("alert", "Failed to load requisition details.");
-        }
     }
 
     private void CloseAllModals()
@@ -347,6 +350,11 @@ else
         selectedRequisition = null;
     }
 
+
+    private void HandleCreateVirtualSociety()
+    {
+        nav.NavigateTo("chairperson/createVirtualSociety");
+    }
     // ── Delete ───────────────────────────────────────────────
     private async Task DeleteRequisition(Guid id)
     {

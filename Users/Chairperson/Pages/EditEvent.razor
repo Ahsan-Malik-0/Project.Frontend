@@ -29,6 +29,26 @@
                                @bind="event_date" />
                     </div>
 
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Event Time:</label>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label text-muted">From</label>
+                                <input class="form-control"
+                                       type="time"
+                                       @bind="startTime" />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label text-muted">To</label>
+                                <input class="form-control"
+                                       type="time"
+                                       @bind="endTime" />
+                            </div>
+                        </div>
+                    </div>
+
                     @if (!string.IsNullOrEmpty(eventError))
                     {
                         <div class="alert alert-danger p-2">
@@ -269,6 +289,12 @@
     private NonFinancial_Req nonFinancialOptions = new();
     private string event_name = "";
     private DateTime event_date = DateTime.Now; // Fixed: Use FromDateTime static method
+
+    // --- FIX: Use TimeOnly for time fields to match <input type="time"> binding ---
+    private TimeOnly startTime = new TimeOnly(12, 0, 0);
+    private TimeOnly endTime = new TimeOnly(12, 0, 0);
+    // --- END FIX ---
+
     private string req_type = "financial";
     private string main_type = "LTs";
     private string req_name = "";
@@ -280,12 +306,11 @@
     private bool isEditRequirementMode = false;
     private EventRequirementDto? selectedRequirement;
 
-    List<EventRequirementDto> requirements = new();
+    List<EventRequirementDto> requirements = null!;
 
     protected override async Task OnParametersSetAsync()
     {
-        // if (EventId != null)
-        // {
+        requirements = new();
         var @event = await chairpersonServices.GetEventById(EventId!.Value);
 
         if (@event == null)
@@ -295,7 +320,9 @@
         }
 
         event_name = @event.Name;
-        event_date = @event.Date;
+        event_date = @event.EventDate;
+        startTime = TimeOnly.FromTimeSpan(@event.StartTime);
+        endTime = TimeOnly.FromTimeSpan(@event.EndTime);
 
         foreach (var requirement in @event.Requirements)
         {
@@ -311,6 +338,24 @@
         }
     }
 
+    private string HandleTime()
+    {
+        var start = startTime.ToTimeSpan();
+        var end = endTime.ToTimeSpan();
+
+        if (start >= end)
+        {
+            Console.WriteLine($"{start}, {end}, {start >= end}");
+            return "End time must be greater then start time";
+        }
+        else if ((end - start) < TimeSpan.FromHours(1))
+        {
+            Console.WriteLine($"{start}, {end}, {start - end}");
+            return "Event duration must be at least 1 hour";
+        }
+        return null!;
+        
+    }
 
     private void OnStatusChanged(ChangeEventArgs e)
     {
@@ -416,6 +461,14 @@
             eventError = "Invalid Date";
             return;
         }
+
+        string TimeError = HandleTime();
+        if (!String.IsNullOrEmpty(TimeError))
+        {
+            eventError = TimeError;
+            return;
+        }
+
         if (isEditRequirementMode)
         {
             reqError = "Update Requirement First";
@@ -426,7 +479,9 @@
         {
             Id = EventId!.Value,
             Name = event_name,
-            Date = event_date,
+            StartTime = startTime.ToTimeSpan(),
+            EndTime = endTime.ToTimeSpan(),
+            EventDate = event_date,
             Requirements = requirements
         };
 
@@ -450,8 +505,6 @@
             eventError = response.Error;
         }
     }
-
-
 
     private void ClearForm()
     {
