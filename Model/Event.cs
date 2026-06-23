@@ -14,8 +14,10 @@ namespace Project.Frontend.Model
         public DateTime EventDate { get; set; }
         public required string Status { get; set; }
         public string? ReviewMessage { get; set; }
-        public Guid SocietyId { get; set; }
+        public Guid? SocietyId { get; set; }
         public Society? Society { get; set; }
+        public Guid? VirtualSocietyId { get; set; }
+        public VirtualSociety? VirtualSociety { get; set; }
         public Guid? RequisitionId { get; set; }
         [JsonIgnore]
         [ForeignKey(nameof(RequisitionId))] // Add this line

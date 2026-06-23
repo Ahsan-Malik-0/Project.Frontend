@@ -26,9 +26,12 @@
                 </div>
             }
 
-            <button class="btn btn-primary btn-sm px-3" @onclick="GoToCreate">
-                <i class="bi bi-plus-lg me-1"></i> New Budget
-            </button>
+            @if (isCreated)
+            {
+                <button class="btn btn-primary btn-sm px-3" @onclick="GoToCreate">
+                    <i class="bi bi-plus-lg me-1"></i> New Budget
+                </button>
+            }
         </div>
     </div>
 
@@ -59,7 +62,7 @@
                                style="font-size: 0.7rem; letter-spacing: 0.06em;">
                             Requested Amount
                         </p>
-                        <h5 class="fw-bold text-primary mb-1">@selectedBudget?.RequestedAmount</h5>
+                        <h5 class="fw-bold text-primary mb-1">@selectedBudget?.RequestedAmount.ToString("N0")</h5>
                         <p class="text-muted mb-0" style="font-size: 0.75rem;">
                             @selectedBudget?.RequestedDate.ToString("dd MMM yyyy")
                         </p>
@@ -75,7 +78,7 @@
                             Alloted Amount
                         </p>
                         <h5 class="fw-bold text-success mb-1">
-                            @(selectedBudget?.AllotedAmount > 0 ? selectedBudget?.AllotedAmount.ToString("C") : "—")
+                            @(selectedBudget?.AllotedAmount > 0 ? selectedBudget?.AllotedAmount.ToString("N0") : "—")
                         </h5>
                         <p class="text-muted mb-0" style="font-size: 0.75rem;">
                             @(selectedBudget?.AllotedDate != default(DateTime)
@@ -94,7 +97,7 @@
                             Credits
                         </p>
                         <h5 class="fw-bold text-warning mb-1">
-                            @(selectedBudget?.Credits > 0 ? selectedBudget?.Credits.ToString("C") : "—")
+                            @(selectedBudget?.Credits > 0 ? selectedBudget?.Credits.ToString("N0") : "—")
                         </h5>
                     </div>
                 </div>
@@ -155,7 +158,7 @@
                                         @if (ev.EstimateAmount.HasValue)
                                         {
                                             <span class="text-success fw-semibold">
-                                                @ev.EstimateAmount.Value.ToString("C")
+                                                @ev.EstimateAmount.Value.ToString("N0")
                                             </span>
                                         }
                                         <span class="badge bg-secondary bg-opacity-10 text-secondary fw-normal">
@@ -231,6 +234,7 @@
 @code {
     bool loading = true;
     private List<YearlyBudgetResponseDto> yearlyBudgets = new();
+    bool isCreated = false;
     private YearlyBudgetResponseDto? selectedBudget;
     private HashSet<Guid> expandedEvents = new();
 
@@ -246,6 +250,19 @@
             selectedBudget = yearlyBudgets
                 .OrderByDescending(b => b.Session)
                 .FirstOrDefault();
+
+
+            if (selectedBudget != null)
+            {
+                if (!selectedBudget.Session.StartsWith(DateTime.Now.Year.ToString()))
+                {
+                    isCreated = true;
+                }
+            }
+            else
+            {
+                isCreated = true;
+            }
         }
         catch (Exception ex)
         {

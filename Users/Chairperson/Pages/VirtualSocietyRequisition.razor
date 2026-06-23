@@ -1,0 +1,381 @@
+﻿@page "/chairperson/virtualSociety/requisition"
+@using Project.APIs.Model
+@layout ChairpersonLayout
+@attribute [Authorize(Roles = "chairperson")]
+
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4">
+    <h4 class="fw-bold mb-3">Create Virtual Society Requisition:</h4>
+    <button class="btn btn-sm btn-primary" @onclick="OpenEventModel">Create New Event</button>
+</div>
+
+<!-- ===== MODAL: Reject ===== -->
+@if (showEventModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.5)">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header border-bottom">
+                    <h5 class="modal-title fw-bold">
+                        New Event
+                    </h5>
+                    <button class="btn-close" @onclick="CloseEventModal"></button>
+                </div>
+                <div class="modal-body">
+                    <VirtualSocietyEvent VirtualSocietyId=@virtualSocietyId!.Value />
+                </div>
+                @* <div class="modal-footer border-top">
+                    <button class="btn btn-outline-secondary btn-sm" @onclick="CloseAllModals">Cancel</button>
+                    <button class="btn btn-danger btn-sm px-4" disabled="@isActing" @onclick="ConfirmReject">
+                        @if (isActing)
+                        {
+                            <span class="spinner-border spinner-border-sm me-1"></span>
+                        }
+                        Send
+                    </button>
+                </div> *@
+            </div>
+        </div>
+    </div>
+}
+
+<div class="container py-5">
+    <!-- ================= FORM SECTION ================= -->
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8 col-sm-12">
+            <div class="card shadow border rounded-4">
+                <div class="card-body p-4">
+                    <h4 class="text-center fw-bold mb-4">Create Requisition</h4>
+
+                    <EditForm Model="requisitionDto" OnValidSubmit="HandleSubmit">
+                        <DataAnnotationsValidator />
+
+                        <!-- Subject -->
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Subject</label>
+                            <input @bind-Value="requisitionDto.Subject"
+                                    @bind-Value:event="oninput"
+                                    class="form-control form-control"
+                                    placeholder="Enter requisition subject" />
+                            <ValidationMessage For="@(() => requisitionDto.Subject)" class="text-danger small" />
+                        </div>
+
+                        <!-- Body -->
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Application Body</label>
+                            <textarea @bind-Value="requisitionDto.Body"
+                                        @bind-Value:event="oninput"
+                                        rows="5"
+                                        class="form-control"
+                                        placeholder="Write application content here..." />
+                            <ValidationMessage For="@(() => requisitionDto.Body)" class="text-danger small" />
+                        </div>
+
+                        <div class="d-flex flex-column flex-md-row justify-content-end gap-4 mt-4">
+                            <button class="btn btn-outline-secondary w-100 w-md-auto" @onclick="HandleCancel">
+                                Cancel Requisition
+                            </button>
+                            <button type="submit" class="btn btn-success w-100 w-md-auto">
+                                Submit Requisition
+                            </button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= APPLICATION PREVIEW ================= -->
+    <div class="row justify-content-center mt-5">
+        <div class="col-lg-10">
+
+            <div class="card shadow-lg border rounded-4">
+                <div class="card-body p-5" id="application">
+
+                    <!-- Header -->
+                    <div class="d-flex align-items-center gap-4 border-bottom pb-3 mb-4">
+                        <img src="/images/biit_logo.png"
+                                alt="BIIT Logo"
+                                style="max-width:80px;" />
+                        <div>
+                            <h4 class="fw-bold mb-0">Barani Institute Of Information Technology</h4>
+                            <small class="text-muted">Official Event Requisition Application</small>
+                        </div>
+                    </div>
+
+                    <!-- Subject + Date -->
+                    <div class="mb-4">
+                        <p class="mb-1">
+                            <strong>Subject:</strong>
+                            @(string.IsNullOrWhiteSpace(requisitionDto.Subject)
+                                                        ? "__________________________"
+                                                        : requisitionDto.Subject)
+                        </p>
+
+                        <p class="mb-1">
+                            <strong>Requested Date:</strong>
+                            @(requestedDate.ToString("dd MMM yyyy"))
+                        </p>
+                    </div>
+
+                    <!-- Body -->
+                    <div class="mb-4">
+                        <p>Respected Sir,</p>
+
+                        <p style="white-space: pre-line;">
+                            @(string.IsNullOrWhiteSpace(requisitionDto.Body)
+                                                        ? "(Application body will appear here...)"
+                                                        : requisitionDto.Body)
+                        </p>
+                    </div>
+                    @if(loading)
+                    {
+                        <div class="text-center text-muted py-5">
+                            <p class="mb-0 small">Loading VirtualSocietyEvents ...</p>
+                        </div>
+                    }
+                    else if (virtualSocietyEvents == null || !virtualSocietyEvents.Any())
+                    {
+                        <div class="text-center text-muted py-5">
+                            <i class="bi bi-calendar-x fs-2 d-block mb-2"></i>
+                            <p class="mb-0 small">No events planned for this virtual society.</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="accordion">
+                            @foreach (var ev in virtualSocietyEvents)
+                            {
+                                bool isOpen = expandedEvents.Contains(ev.Id);
+                                decimal eventTotal = ev.Requirements?
+                                .Sum(r => r.Price * r.Quantity) ?? 0;
+
+                                <div class="accordion-item border mb-2 rounded shadow-sm overflow-hidden">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button @(isOpen ? "" : "collapsed") fw-semibold"
+                                                type="button"
+                                                @onclick="() => ToggleEvent(ev.Id)">
+                                            <div class="d-flex align-items-center justify-content-between w-100 flex-wrap gap-2 pe-2">
+                                                <span>@ev.Name</span>
+                                                <div class="d-flex align-items-center gap-3 text-muted small fw-normal">
+                                                    <span>
+                                                        <i class="bi bi-calendar3 me-1"></i>
+                                                        @ev.EventDate.ToString("dd MMM yyyy")
+                                                    </span>
+                                                    <span>
+                                                        <i class="bi bi-clock me-1"></i>
+                                                        @ev.StartTime — @ev.EndTime
+                                                    </span>
+                                                    @if (eventTotal > 0)
+                                                    {
+                                                        <span class="fw-semibold text-success">
+                                                            Rs @eventTotal.ToString("N0")
+                                                        </span>
+                                                    }
+                                                    <span class="badge bg-secondary bg-opacity-10 text-secondary fw-normal">
+                                                        @(ev.Requirements?.Count ?? 0) req(s)
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </button>
+                                    </h2>
+
+                                    @if (isOpen)
+                                    {
+                                        <div class="accordion-collapse show">
+                                            <div class="accordion-body p-0">
+                                                @if (ev.Requirements == null || !ev.Requirements.Any())
+                                                {
+                                                    <p class="text-center text-muted py-3 mb-0 small">
+                                                        No requirements for this event.
+                                                    </p>
+                                                }
+                                                else
+                                                {
+                                                    <div class="table-responsive">
+                                                        <table class="table table-hover table-sm align-middle mb-0">
+                                                            <thead class="table-light">
+                                                                <tr>
+                                                                    <th class="small ps-3">#</th>
+                                                                    <th class="small">Type</th>
+                                                                    <th class="small">Name</th>
+                                                                    <th class="small text-center">Qty</th>
+                                                                    <th class="small text-end">Price</th>
+                                                                    <th class="small text-end">Total</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                @{
+                                                                    int ri = 1;
+                                                                }
+                                                                @foreach (var req in ev.Requirements)
+                                                                {
+                                                                    <tr>
+                                                                        <td class="text-muted ps-3">@ri</td>
+                                                                        <td>@req.Type</td>
+                                                                        <td>@req.Name</td>
+                                                                        <td class="text-center">@req.Quantity</td>
+                                                                        <td class="text-end">@req.Price.ToString("N0")</td>
+                                                                        <td class="text-end fw-semibold text-success">
+                                                                            @((req.Price * req.Quantity).ToString("N0"))
+                                                                        </td>
+                                                                    </tr>
+                                                                    ri++;
+                                                                }
+                                                            </tbody>
+                                                            <tfoot class="table-light">
+                                                                <tr>
+                                                                    <td colspan="5" class="text-end fw-bold">Event Total:</td>
+                                                                    <td class="text-end fw-bold text-primary">
+                                                                        Rs @eventTotal.ToString("N0")
+                                                                    </td>
+                                                                </tr>
+                                                            </tfoot>
+                                                        </table>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                    <!-- Signature Section -->
+                    <div class="mt-4 pt-4 border-top">
+                        <p class="mb-1 fw-semibold">
+                            @chairpersonName
+                        </p>
+                        <p class="mb-4 text-muted">
+                            @chairpersonRole (@chairpersonSocietyName)
+                        </p>
+
+                        <p class="mb-1 fw-semibold">
+                            Mr. Shahid Rashid
+                        </p>
+                        <p class="text-muted">
+                            Assistant Director Student Affairs
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@inject ChairpersonServices chairpersonServices
+@inject ClaimServices claimServices
+@inject NavigationManager nav
+@inject IJSRuntime JS
+@code {
+    [SupplyParameterFromQuery(Name = "contribution")]
+    public decimal? contribution { get; set; }
+
+    [SupplyParameterFromQuery(Name = "virtualSocietyId")]
+    public Guid? virtualSocietyId { get; set; }
+
+    private DateTime requestedDate = DateTime.Now;
+
+    public Guid chairpersonId { get; set; }
+    public string chairpersonName = "";
+    public string chairpersonRole = "";
+    public string chairpersonSocietyName = "";
+
+    bool loading = false;
+    private bool showEventModal = false;
+
+    private List<Event> virtualSocietyEvents = new();
+
+    private CreateVirtualSocietyRequisitionDto requisitionDto = new()
+    {
+        Subject = string.Empty,
+        Body = string.Empty,
+        RequestedDate = DateTime.Now,
+        RequestedAmount = 0,
+        EventIds = null!
+    };
+
+    private HashSet<Guid> expandedEvents = new();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        try
+        {
+            loading = true;
+            var result = await chairpersonServices.GetVirtualSocietiyEvents(virtualSocietyId!.Value);
+            virtualSocietyEvents = result ?? new();
+        }
+        catch(Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"Unable to fetch events, {ex.Message}");
+        }
+        finally
+        {
+            loading = false;
+        }
+
+        // Get chairperson id to get details for requisition form
+        var claims = await claimServices.GetClaims();
+        chairpersonId = Guid.Parse(claims.Id);
+        chairpersonRole = claims.Role;
+
+        var chaiperson = await chairpersonServices.GetChairpersonDetailsForRequisition(chairpersonId);
+        if (chaiperson == null)
+        {
+            await JS.InvokeVoidAsync("alert", "Chairperson not found");
+            return;
+        }
+
+        chairpersonName = chaiperson.ChairpersonName!;
+        chairpersonSocietyName = chaiperson.SocietyName!;
+    }
+
+    void OpenEventModel()
+    {
+        showEventModal = true;
+    }
+
+    async Task CloseEventModal()
+    {
+        showEventModal = false;
+        await OnParametersSetAsync();
+    }
+
+    private void ToggleEvent(Guid eventId)
+    {
+        if (expandedEvents.Contains(eventId))
+            expandedEvents.Remove(eventId);
+        else
+            expandedEvents.Add(eventId);
+    }
+
+    private async Task HandleSubmit()
+    {
+        requisitionDto.RequestedDate = requestedDate;
+        requisitionDto.RequestedAmount = virtualSocietyEvents
+        .Where(e => e.Requirements != null)
+        .SelectMany(e => e.Requirements!)
+        .Sum(r => r.Price * r.Quantity);
+        requisitionDto.EventIds = virtualSocietyEvents.Select(vse => vse.Id).ToList();
+
+        var response = await chairpersonServices.CreateVirtualSocietyRequisition(requisitionDto);
+
+        if (response.Success)
+        {
+            await JS.InvokeVoidAsync("alert", "Requisition Created Successfully");
+            nav.NavigateTo("/chairperson/virtualSociety");
+        }
+        else
+        {
+            await JS.InvokeVoidAsync("alert", $"Unable to Create Requisition due to {response.Error}");
+            nav.NavigateTo("/chairperson/virtualSociety");
+        }
+    }
+
+    private async Task HandleCancel()
+    {
+        var response = await JS.InvokeAsync<bool>("confirm", "Are you sure, you want to cancel requisition");
+
+        if (response)
+            nav.NavigateTo("chairperson/virtualSociety");
+    }
+}

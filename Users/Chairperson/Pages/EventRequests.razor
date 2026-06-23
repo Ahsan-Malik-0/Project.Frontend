@@ -4,7 +4,22 @@
 
 @attribute [Authorize(Roles = "chairperson")]
 
-<h4 class="fw-bold mb-3">Event Request:</h4>
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4">
+    <h4 class="fw-bold mb-3">Event Request:</h4>
+
+    @if (String.IsNullOrEmpty(remainingCredits))
+    {
+        <h6 class="fw-bold text-muted text-danger">Create Yearly Budget </h6>
+    }
+    else if (remainingCredits == "1")
+    {
+        <h6 class="fw-bold text-muted text-secondary">Budget not alloted yet</h6>
+    }
+    else
+    {
+        <h6 class="fw-bold text-muted @(remainingCredits == "0" ? "text-danger" : "text-success")">Remaining Budget: @remainingCredits</h6>
+    }
+</div>
 
 @if (loading)
 {
@@ -254,8 +269,8 @@ else
                     </h5>
 
                     <button type="button"
-                            class="btn-close"
-                            @onclick="CloseRejectModel">
+                    class="btn-close"
+                    @onclick="CloseRejectModel">
                     </button>
                 </div>
 
@@ -266,21 +281,21 @@ else
                     </label>
 
                     <textarea class="form-control"
-                              rows="4"
-                              placeholder="Write rejection reason..."
-                              @bind="rejectMessage"></textarea>
+                    rows="4"
+                    placeholder="Write rejection reason..."
+                    @bind="rejectMessage"></textarea>
 
                 </div>
 
                 <div class="modal-footer bg-light border-top">
                     <button class="btn btn-secondary"
-                            @onclick="CloseRejectModel">
+                    @onclick="CloseRejectModel">
                         Cancel
                     </button>
 
                     <button class="btn btn-danger"
-                            data-bs-dismiss="modal"
-                            @onclick="() => SendRejection(selectedEvent!)">
+                    data-bs-dismiss="modal"
+                    @onclick="() => SendRejection(selectedEvent!)">
                         Send
                     </button>
                 </div>
@@ -288,8 +303,6 @@ else
         </div>
     </div>
 }
-
-
 
 @inject ClaimServices claimServices
 @inject ChairpersonServices chairpersonServices
@@ -304,6 +317,8 @@ else
     TimeOnly startTime = new TimeOnly(12, 00, 00);
     private List<Event> addedEvents = new();
     string rejectMessage = "";
+
+    private string? remainingCredits;
 
     // Models
     private bool showViewDetails;
@@ -372,6 +387,9 @@ else
             events = (await chairpersonServices.GetPendingEvents(Guid.Parse(id)))
             .OrderByDescending(e => e.EventDate.Date)
             .ToList();
+
+            var result = await chairpersonServices.GetRemainigYearlyBudge(Guid.Parse(id));
+            remainingCredits = result.ToString() ?? null;
         }
         catch (Exception ex)
         {

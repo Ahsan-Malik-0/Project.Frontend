@@ -319,35 +319,57 @@ else
                     }
                     else
                     {
-                        @foreach (var comment in scrutinyDetails.OrderBy(c => c.CommentDate))
-                        {
-                            bool isOwn = comment.AdministrationName == userName
-                                      && comment.AdministrationRole == Role;
+                        <div class="p-3">
 
-                            <div class="mb-3 p-3 rounded border bg-light">
-                                <!-- Name -->
-                                <div class="fw-semibold text-primary small mb-0">
-                                    @comment.AdministrationName
+                            @foreach (var comment in scrutinyDetails.OrderBy(c => c.CommentDate))
+                            {
+                                bool isOwn = comment.AdministrationRole == Role;
+
+                                <div class="d-flex mb-3 @(isOwn ? "justify-content-end" : "justify-content-start")">
+
+                                    <div class="card border-0 shadow-sm @(isOwn ? "bg-success-subtle" : "bg-light")"
+                                         style="max-width: 75%;">
+
+                                        <div class="card-body py-2 px-3">
+
+                                            @if (!isOwn)
+                                            {
+                                                <div class="fw-bold text-primary small">
+                                                    @comment.AdministrationName
+                                                </div>
+
+                                                <div class="text-muted small mb-2">
+                                                    @comment.AdministrationRole
+                                                </div>
+                                            }
+
+                                            <div>
+                                                @comment.AdministrationComment
+                                            </div>
+
+                                            <div class="d-flex justify-content-end align-items-center gap-2 mt-2">
+
+                                                <small class="text-muted">
+                                                    @comment.CommentDate.ToString("dd MMM")
+                                                </small>
+
+                                                @if (isOwn)
+                                                {
+                                                    <button class="btn btn-link text-danger p-0 border-0"
+                                                            @onclick="() => HandleDeleteComment(comment.Id)">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                }
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
                                 </div>
-                                <!-- Role -->
-                                <div class="text-muted" style="font-size:0.72rem;">@comment.AdministrationRole</div>
-                                <!-- Comment -->
-                                <p class="mb-1 mt-2 fw-semibold">@comment.AdministrationComment</p>
-                                <!-- Date + Delete -->
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <span class="text-muted" style="font-size:0.72rem;">
-                                        @comment.CommentDate.ToString("dd MMM yyyy, hh:mm tt")
-                                    </span>
-                                    @if (isOwn)
-                                    {
-                                        <button class="btn btn-link btn-sm text-danger p-0" style="font-size:0.75rem;"
-                                                @onclick="() => HandleDeleteComment(comment.Id)">
-                                            <i class="bi bi-trash me-1"></i> Delete
-                                        </button>
-                                    }
-                                </div>
-                            </div>
-                        }
+                            }
+
+                        </div>
                     }
 
                 </div>

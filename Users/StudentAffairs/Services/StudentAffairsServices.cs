@@ -137,6 +137,53 @@ namespace Project.Frontend.StudentAffairsServices
             }
         }
 
+        // Virtual Society
+        // Get Chairperson List
+        public async Task<List<ChairpersonDetailsForVirtualSocietyDto>?> GetChairpersonList()
+        {
+            try
+            {
+                var response = await httpClient.GetAsync($"StudentAffairs/getChairpersonListForVS");
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    return null;
+                }
+
+                var memberProfile = await response.Content.ReadFromJsonAsync<List<ChairpersonDetailsForVirtualSocietyDto>>();
+
+                return memberProfile ?? null;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return null;
+            }
+        }
+
+        // Virtual Society
+        // Create Virtual Society
+        public async Task<ResponseResult> CreateVirtualSociety(CreateVirtualSocietyDto virtualSociety)
+        {
+            try
+            {
+                var response = await httpClient.PostAsJsonAsync($"StudentAffairs/createVirtualSociety", virtualSociety);
+                if (!response.IsSuccessStatusCode)
+                {
+                    var resString = await response.Content.ReadAsStringAsync();
+                    var jsonNode = JsonNode.Parse(resString);
+                    var error = jsonNode?["errors"]?.ToString() ?? string.Empty;
+
+                    return new ResponseResult() { Success = false, Error = error };
+                }
+
+                return new ResponseResult() { Success = true };
+            }
+            catch (Exception ex)
+            {
+                return new ResponseResult() { Success = false, Error = ex.Message };
+            }
+        }
 
         // Profile Details
         public async Task<MemberProfileDto?> GetProfile(Guid memberId)

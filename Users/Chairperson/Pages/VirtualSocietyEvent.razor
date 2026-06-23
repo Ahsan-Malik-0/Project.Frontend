@@ -1,13 +1,4 @@
-﻿@page "/president/event"
-
-@layout PresidentLayout
-@attribute [Authorize(Roles = "president")]
-@inject PresidentServices presidentServices
-@inject ClaimServices claimServices
-@inject NavigationManager nav
-@inject IJSRuntime JS
-
-<div class="container mt-4">
+﻿<div class="container mt-4">
 
     <div class="row g-4 mb-4">
 
@@ -40,14 +31,14 @@
                             <div class="col-md-6">
                                 <label class="form-label text-muted">From</label>
                                 <input class="form-control"
-                                       type="time" 
+                                       type="time"
                                        @bind="startTime" />
                             </div>
 
                             <div class="col-md-6">
                                 <label class="form-label text-muted">To</label>
                                 <input class="form-control"
-                                       type="time" 
+                                       type="time"
                                        @bind="endTime" />
                             </div>
                         </div>
@@ -76,27 +67,29 @@
 
                         <div class="form-check form-check-inline">
                             <label class="form-check-label">
-                            <input class="form-check-input"
-                                   type="radio"
-                                   name="type"
-                                   value="financial"
-                                   checked
-                                   @onchange="OnStatusChanged" />
-                            Financial</label>
+                                <input class="form-check-input"
+                                       type="radio"
+                                       name="type"
+                                       value="financial"
+                                       checked
+                                       @onchange="OnStatusChanged" />
+                                Financial
+                            </label>
                         </div>
 
                         <div class="form-check form-check-inline">
                             <label class="form-check-label">
-                            <input class="form-check-input"
-                                   type="radio"
-                                   name="type"
-                                   value="non-financial"
-                                   @onchange="OnStatusChanged" />
-                            Non-Financial</label>
+                                <input class="form-check-input"
+                                       type="radio"
+                                       name="type"
+                                       value="non-financial"
+                                       @onchange="OnStatusChanged" />
+                                Non-Financial
+                            </label>
                         </div>
                     </div>
 
-                    @if(req_type == "financial")
+                    @if (req_type == "financial")
                     {
                         <div class="row">
                             <div class="col-md-6 mb-3">
@@ -111,12 +104,10 @@
 
                             <div class="col-md-3 mb-3">
                                 <label class="form-label">Price</label>
-                                <input 
-                                    class="form-control" 
-                                    type="number" 
-                                    @bind="req_price" 
-                                    min="0"
-                                    />
+                                <input class="form-control"
+                                       type="number"
+                                       @bind="req_price"
+                                       min="0" />
                             </div>
                         </div>
                     }
@@ -167,26 +158,24 @@
 
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Other Type</label>
-                                <input 
-                                    disabled="@(main_type != "Other")" 
-                                    class="form-control" 
-                                    type="text" 
-                                    @bind="req_name" 
-                                    placeholder="Type custom requirement..." />
+                                <input disabled="@(main_type != "Other")"
+                                       class="form-control"
+                                       type="text"
+                                       @bind="req_name"
+                                       placeholder="Type custom requirement..." />
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Qty</label>
-                                <input 
-                                    type="number" 
-                                    class="form-control" 
-                                    @bind="req_qty" 
-                                    min="1" 
-                                    disabled="@(main_type != "Other")" />
+                                <input type="number"
+                                       class="form-control"
+                                       @bind="req_qty"
+                                       min="1"
+                                       disabled="@(main_type != "Other")" />
                             </div>
                         </div>
                     }
 
-                
+
                     @if (!string.IsNullOrEmpty(reqError))
                     {
                         <div class="alert alert-danger p-2">
@@ -196,8 +185,8 @@
 
                     <div class="d-flex gap-2">
                         <button class="btn btn-primary"
-                                @onclick="HandleAddOrUpdateRequirement">
-                            @(isEditMode ? "Update Requirement" : "Add Requirement")
+                                @onclick="HandleAddRequirement">
+                            Add Requirement
                         </button>
 
                         <button class="btn btn-secondary"
@@ -241,14 +230,7 @@
                         <td>@req.Quantity</td>
                         <td>@req.Price</td>
                         <td>
-                            <button class="btn btn-sm btn-warning me-1"
-                                    disabled="@isEditMode"
-                                    @onclick="() => HandleEdit(req)">
-                                Edit
-                            </button>
-
                             <button class="btn btn-sm btn-danger"
-                                    disabled="@isEditMode"
                                     @onclick="() => HandleDelete(req)">
                                 Delete
                             </button>
@@ -262,74 +244,25 @@
 
 
 <div class="row my-3 justify-content-end">
-
-    @if (isEventEditMode)
-    {
-        <div class="col-6 col-md-auto mb-2 mb-md-0">
-            <button class="btn btn-secondary w-100 fw-bold py-2"
-                    @onclick="HandleCancel">
-                Cancel Update
-            </button>
-        </div>
-    }
-
-    <div class="@(isEventEditMode ? "col-6" : "col-auto") col-md-auto">
+    <div class="col-auto col-md-auto">
         <button class="btn btn-success w-100 fw-bold py-2"
-                @onclick="HandleSubmit">
-            @(isEventEditMode ? "Update Event" : "Create Event")
+                @onclick="HandlCreateEvent">
+            Create Event
         </button>
     </div>
-
 </div>
 
+<p>@VirtualSocietyId</p>
+
+@inject ChairpersonServices chairpersonServices
+@inject ClaimServices claimServices
+@inject NavigationManager nav
+@inject IJSRuntime JS
 @code {
-    // For Event Edit Mode
-    [SupplyParameterFromQuery (Name = "id")]
-    public Guid? EventId { get; set; }
-    private bool isEventEditMode => EventId.HasValue;
+    [Parameter] 
+    public Guid VirtualSocietyId { get; set; }
 
     private NonFinancial_Req nonFinancialOptions = new();
-
-    protected override async Task OnParametersSetAsync()
-    {
-        if(isEventEditMode)
-        {
-            var @event = await presidentServices.GetEventById(EventId!.Value);
-
-            if (@event == null)
-            {
-                await JS.InvokeVoidAsync("alert", "No event found");
-                return;
-            }
-
-            event_name = @event.Name;
-            event_date = @event.EventDate;
-            startTime = TimeOnly.FromTimeSpan(@event.StartTime);
-            endTime = TimeOnly.FromTimeSpan(@event.EndTime);
-
-            requirements.Clear();
-            foreach (var requirement in @event.Requirements)
-            {
-                requirements.Add(
-                    new EventRequirementDto()
-                        {
-                            Type = requirement.Type,
-                            Name = requirement.Name,
-                            Quantity = requirement.Quantity,
-                            Price = requirement.Price
-                        }
-                );
-            }
-        }
-    }
-
-    private void HandleCancel()
-    {
-        requirements.Clear();
-        nav.NavigateTo("/president");
-    }
-
-
     private string event_name = "";
     private DateTime event_date = DateTime.Now; // Fixed: Use FromDateTime static method
 
@@ -369,164 +302,6 @@
         return null!;
     }
 
-
-    private async Task HandleSubmit()
-    {
-        eventError = null;
-        reqError = null;
-
-        if (string.IsNullOrWhiteSpace(event_name))
-        {
-            eventError = "Event name is required.";
-            return;
-        }
-
-        if (requirements.Count == 0)
-        {
-            eventError = "At least one requirement is required.";
-            return;
-        }
-
-        if(event_date < DateTime.Now)
-        {
-            eventError = "Invalid Date";
-            return;
-        }
-
-        string TimeError = HandleTime();
-        if (!String.IsNullOrEmpty(TimeError))
-        {
-            eventError = TimeError;
-            return;
-        }
-
-        if(isEditMode)
-        {
-            reqError = "Update Requirement First";
-            return;
-        }
-
-        if (isEventEditMode)
-        {
-            var dto = new UpdateEventDto()
-            {
-                Id = EventId!.Value,
-                Name = event_name,
-                StartTime = startTime.ToTimeSpan(),
-                EndTime = endTime.ToTimeSpan(),
-                EventDate = event_date,
-                Requirements = requirements
-            };
-
-            var response = await presidentServices.UpdateEvent(dto);
-
-            if (response.Success)
-            {
-                await JS.InvokeVoidAsync("alert", "Event Updated Successfully");
-                nav.NavigateTo("/president");
-            }
-            else
-            {
-                eventError = response.Error;
-            }
-        }
-        else
-        {
-
-            var claims = await claimServices.GetClaims();
-            var societyId = await presidentServices.GetSocietyIdAsync(claims.Id);
-
-            if (societyId is null)
-            {
-                eventError = "Unable to find society.";
-                return;
-            }
-
-            var dto = new AddEventDto()
-            {
-                Name = event_name,
-                EventDate = event_date,
-                StartTime = startTime.ToTimeSpan(),
-                EndTime = endTime.ToTimeSpan(),
-                SocietyId = societyId.Value,
-                Requirements = requirements
-            };
-
-            var response = await presidentServices.CreateEvent(dto);
-
-            if (response.Success)
-            {
-                await JS.InvokeVoidAsync("alert", "Event created successfully");
-                nav.NavigateTo("/president");
-            }
-            else
-            {
-                eventError = response.Error;
-            }
-        }
-    }
-
-
-    private void OnStatusChanged(ChangeEventArgs e)
-    {
-        req_type = e.Value?.ToString() ?? "financial";
-
-        if (req_type == "non-financial")
-        {
-            req_price = 0;
-        }
-    }
-
-
-    private void HandleAddOrUpdateRequirement()
-    {
-        reqError = null;
-
-        if (string.IsNullOrWhiteSpace(req_name) || string.IsNullOrWhiteSpace(req_type) || req_qty < 0)
-        {
-            reqError = "Requirement type, name and quantity are required.";
-            return;
-        }
-
-        if(req_type == "financial" && req_price == 0)
-        {
-            reqError = "Price can't be zero for finential Requirement";
-            return;
-        }
-
-        decimal finalPrice = req_type == "non-financial" ? 0 : req_price;
-
-        if (isEditMode && selectedRequirement != null)
-        {
-            selectedRequirement.Type = req_type;
-            selectedRequirement.Name = req_name;
-            selectedRequirement.Quantity = req_qty;
-            selectedRequirement.Price = finalPrice;
-        }
-        else
-        {
-            requirements.Add(new EventRequirementDto
-            {
-                Type = req_type,
-                Name = req_name,
-                Quantity = req_qty,
-                Price = finalPrice
-            });
-        }
-
-        ClearForm();
-    }
-
-    private void HandleEdit(EventRequirementDto req)
-    {
-        selectedRequirement = req;
-        req_type = req.Type;
-        req_name = req.Name;
-        req_qty = req.Quantity;
-        req_price = req.Price;
-        isEditMode = true;
-    }
-
     private async Task HandleDelete(EventRequirementDto req)
     {
         bool confirmDelete = await JS.InvokeAsync<bool>("confirm", $"Delete {req.Name}?");
@@ -548,4 +323,104 @@
         selectedRequirement = null;
     }
 
+
+    private void OnStatusChanged(ChangeEventArgs e)
+    {
+        req_type = e.Value?.ToString() ?? "financial";
+
+        if (req_type == "non-financial")
+        {
+            req_price = 0;
+        }
+    }
+
+    private void HandleAddRequirement()
+    {
+        reqError = null;
+
+        if (string.IsNullOrWhiteSpace(req_name) || string.IsNullOrWhiteSpace(req_type) || req_qty < 0)
+        {
+            reqError = "Requirement type, name and quantity are required.";
+            return;
+        }
+
+        if (req_type == "financial" && req_price == 0)
+        {
+            reqError = "Price can't be zero for finential Requirement";
+            return;
+        }
+
+        decimal finalPrice = req_type == "non-financial" ? 0 : req_price;
+
+
+        requirements.Add(new EventRequirementDto
+        {
+            Type = req_type,
+            Name = req_name,
+            Quantity = req_qty,
+            Price = finalPrice
+        });
+
+
+        ClearForm();
+    }
+
+    private async Task HandlCreateEvent()
+    {
+        eventError = null;
+        reqError = null;
+
+        if (string.IsNullOrWhiteSpace(event_name))
+        {
+            eventError = "Event name is required.";
+            return;
+        }
+
+        if (requirements.Count == 0)
+        {
+            eventError = "At least one requirement is required.";
+            return;
+        }
+
+        if (event_date < DateTime.Now)
+        {
+            eventError = "Invalid Date";
+            return;
+        }
+
+        string TimeError = HandleTime();
+        if (!String.IsNullOrEmpty(TimeError))
+        {
+            eventError = TimeError;
+            return;
+        }
+
+        if (isEditMode)
+        {
+            reqError = "Update Requirement First";
+            return;
+        }
+
+        var dto = new AddVirtualSocietyEventDto()
+        {
+            Name = event_name,
+            EventDate = event_date,
+            StartTime = startTime.ToTimeSpan(),
+            EndTime = endTime.ToTimeSpan(),
+            VirtualSocietyId = VirtualSocietyId,
+            Requirements = requirements
+        };
+
+        var response = await chairpersonServices.CreateVirtualSocietyEvent(dto);
+        if (response?.Success == true)
+        {
+            await JS.InvokeVoidAsync("alert", "Event added successfully.");
+            // CloseAllModals();
+            await OnParametersSetAsync();
+        }
+        else
+        {
+            await JS.InvokeVoidAsync("alert", $"Failed to add event: {response?.Error}");
+        }
+    }
 }

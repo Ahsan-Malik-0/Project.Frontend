@@ -1,23 +1,39 @@
-﻿using System.Text.Json.Serialization;
+﻿using Project.APIs.Model;
+using System.Text.Json.Serialization;
 
 namespace Project.Frontend.Model.DTOs
 {
     public class CreateVirtualSocietyDto
     {
         public required string Name { get; set; }
-        public string? Session { get; set; }
-        public List<Guid> SocietyIds { get; set; } = new List<Guid>();
+        public string? Description { get; set; }
+        public DateTime RegistrationEndDate { get; set; }
+        public Guid MemberId { get; set; }
     }
 
-    public class CheckSocietySelectedDto
+    public class GetVirtualSocietyDetailsDto
     {
-        public bool IsChecked { get; set; }
+        public Guid VirtualSocietyId { get; set; }
+        public required string VirtualSocietyName { get; set; }
+        public DateTime RegistrationEndDate { get; set; }
+        public decimal TotalContribution { get; set; }
+        public Guid ManagerId { get; set; }
+        public List<Event>? VirtualSocietyEvents { get; set; }
+        public List<ContributedSocietiesDto>? ContributedSocieties { get; set; }
+        public EventRequisition? VirtualSocietyRequisition { get; set; }
     }
 
-    public class AddIdInVirtualSocietiesSocietyDto
+    public class ContributedSocietiesDto
     {
-        //public Guid VirtualId { get; set; }
-        public List<Guid> SocietyIds { get; set; } = new List<Guid>();
+        public string? SocietyName { get; set; }
+        public Guid Chairpersonid { get; set; }
+        public decimal Conrtibution { get; set; }
+    }
+
+    public class ContributeToVirtualSocietyDto
+    {
+        public Guid VirtualSocietyId { get; set; }
+        public decimal Contribution { get; set; }
     }
 
     public class CreateVirtualSocietyRequisitionDto
@@ -25,15 +41,7 @@ namespace Project.Frontend.Model.DTOs
         public required string Subject { get; set; }
         public required string Body { get; set; }
         public DateTime RequestedDate { get; set; }
-        public decimal RequestAmount { get; set; }
-        public Guid VirtualSocietyId { get; set; }
-        [JsonIgnore]
-        public VirtualSociety? VirtualSociety { get; set; }
-    }
-
-    public class ListOfSocietiesDto
-    {
-        public Guid SocietyId { get; set; }
-        public required string SocietyName { get; set; }
+        public decimal RequestedAmount { get; set; }
+        public List<Guid>? EventIds { get; set; }
     }
 }

@@ -1,0 +1,170 @@
+﻿@page "/studentAffairs/virtualSociety"
+@layout StudentAffairsLayout
+@attribute [Authorize(Roles = "studentAffairs")]
+
+<h4 class="fw-bold mb-4">Create Virtual Society</h4>
+
+<div class="card shadow-sm border col-lg-6 col-md-9 mx-auto">
+    <div class="card-header bg-light">
+        <h5 class="mb-0">Create Virtual Society</h5>
+    </div>
+
+    <div class="card-body">
+
+        <div class="mb-3">
+            <label class="form-label fw-semibold">
+                Society Name
+            </label>
+            <input class="form-control"
+                   @bind="virtualSociety.Name"
+                   type="text"
+                   placeholder="Enter society name" />
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-semibold">
+                Description
+            </label>
+            <textarea class="form-control"
+                      rows="4"
+                      @bind="virtualSociety.Description"
+                      placeholder="Enter society description">
+            </textarea>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="form-label fw-semibold">
+                    Registration End Date
+                </label>
+                <input class="form-control"
+                       @bind="virtualSociety.RegistrationEndDate"
+                       type="date" />
+            </div>
+
+            <div class="col-md-6 mb-3">
+                <label class="form-label fw-semibold">
+                    Chairperson
+                </label>
+
+                <InputSelect class="form-select"
+                             @bind-Value="virtualSociety.MemberId">
+                    <option value="@Guid.Empty">-- Select Chairperson --</option>
+
+                    @if (chairpersonList != null)
+                    {
+                        @foreach (var cp in chairpersonList)
+                        {
+                            <option value="@cp.ChairperonId">
+                                @cp.ChairperonName
+                            </option>
+                        }
+                    }
+                </InputSelect>
+            </div>
+
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-danger p-2 col-11 mx-auto">
+                    @errorMessage
+                </div>
+            }
+        </div>
+
+    </div>
+
+    <div class="card-footer bg-white text-end">
+        <button type="button" class="btn btn-secondary me-2" @onclick="HandleCancle">
+            Cancel
+        </button>
+
+        <button type="submit" class="btn btn-primary" @onclick="HandleCreate">
+            Create Society
+        </button>
+    </div>
+</div>
+
+
+@inject StudentAffairsServices studentAffairsServices
+@inject IJSRuntime JS
+@code {
+    private CreateVirtualSocietyDto virtualSociety = new()
+    {
+        Name = "",
+        Description = "",
+        RegistrationEndDate = DateTime.Now,
+        MemberId = Guid.Empty
+    };
+
+    private string errorMessage = "";
+
+    private List<ChairpersonDetailsForVirtualSocietyDto> chairpersonList = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var result = await studentAffairsServices.GetChairpersonList();
+            if (result != null)
+                chairpersonList = result;
+            else
+                chairpersonList = null!;
+        }
+        catch(Exception ex)
+        {
+            await JS.InvokeVoidAsync("alert", $"{ex.Message}");
+        }
+    }
+
+    async Task HandleCancle()
+    {
+        var response = await JS.InvokeAsync<bool>("confirm", "Are you sure, you want to cancel requisition");
+
+        if (response)
+        {
+            HandleClear();
+        }
+    }
+
+    async Task HandleCreate()
+    {
+        errorMessage = ""; // Reset error message at the start of a validation cycle
+
+        if (virtualSociety.Name == "")
+        {
+            errorMessage = "Name can not be null";
+            return;
+        }
+        else if (virtualSociety.RegistrationEndDate < DateTime.Now)
+        {
+            errorMessage = "Invalid Date";
+            return;
+        }
+        if (virtualSociety.MemberId == Guid.Empty)
+        {
+            errorMessage = "Member Id can not be null";
+            return;
+        }
+
+        var response = await studentAffairsServices.CreateVirtualSociety(virtualSociety);
+
+        if (response.Success)
+        {
+            await JS.InvokeVoidAsync("alert", "Virual Society created successfully.");
+            HandleClear();
+        }
+        else
+        {
+            await JS.InvokeVoidAsync("alert", $"Failed to create: {response.Error}");
+        }
+    }
+
+    void HandleClear()
+    {
+        virtualSociety.Name = "";
+        virtualSociety.Description = "";
+        virtualSociety.RegistrationEndDate = DateTime.Now;
+        virtualSociety.MemberId = Guid.Empty; // Setting to Guid.Empty auto-selects the default <option>
+        errorMessage = ""; // Clears the error message
+    }
+}

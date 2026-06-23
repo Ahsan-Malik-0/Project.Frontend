@@ -85,4 +85,10 @@ namespace Project.Frontend.Model.DTOs
         public string? ChairpersonName { get; set; }
         public string? SocietyName { get; set; }
     }
+
+    public class ChairpersonDetailsForVirtualSocietyDto
+    {
+        public Guid ChairperonId { get; set; }
+        public string? ChairperonName { get; set; }
+    }
 }

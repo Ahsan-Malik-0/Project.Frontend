@@ -1,141 +1,542 @@
-﻿@page "/chairperson/createVirtualSociety"
-
+﻿@page "/chairperson/virtualSociety"
 @layout ChairpersonLayout
-
 @attribute [Authorize(Roles = "chairperson")]
 
-<h1>Create Society</h1>
+<div class="p-2">
 
-<label>Society Name</label>
-<input type="text" @bind="societyName" @value="societyName"/>
+    <h4 class="fw-bold mb-4">Virtual Societies</h4>
+
+    @if (loading)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary"></div>
+            <p class="mt-3 text-muted">Loading Virtual Societies...</p>
+        </div>
+    }
+    else if (virtualSocieties.Count == 0)
+    {
+        <div class="text-center py-5">
+            <i class="bi bi-people fs-1 text-muted d-block mb-2"></i>
+            <p class="text-muted fs-5">No virtual societies available.</p>
+        </div>
+    }
+    else
+    {
+        <div class="row g-4">
+            @foreach (var vs in virtualSocieties)
+            {
+                bool isRegistrationExpired = vs.RegistrationEndDate < DateTime.Today;
+                bool alreadyContributed = vs.ContributedSocieties?
+                .Any(c => c.Chairpersonid == Id) ?? false;
+                bool isManager = vs.ManagerId == Id;
+                bool requisitionExists = vs.VirtualSocietyRequisition != null;
+                int contributorCount = vs.ContributedSocieties?.Count ?? 0;
+
+                <div class="col-12 col-md-6 col-xl-4">
+                    <div class="card border shadow-sm h-100">
+
+                        <!-- Header -->
+                        <div class="card-header bg-white border-bottom d-flex align-items-center justify-content-between py-3">
+                            <h6 class="fw-bold mb-0">@vs.VirtualSocietyName</h6>
+                            @if (isManager)
+                            {
+                                <span class="badge bg-primary bg-opacity-10 text-primary small">Manager</span>
+                            }
+                        </div>
+
+                        <!-- Body -->
+                        <div class="card-body">
+                            <p class="mb-2 small">
+                                <i class="bi bi-calendar-x me-1 text-muted"></i>
+                                <span class="text-muted">Registration End:</span>
+                                <span class="fw-semibold ms-1 @(isRegistrationExpired ? "text-danger" : "")">
+                                    @vs.RegistrationEndDate.ToString("dd MMM yyyy")
+                                    @if (isRegistrationExpired)
+                                    {
+                                        <span class="badge bg-danger ms-1 small">Expired</span>
+                                    }
+                                </span>
+                            </p>
+                            <p class="mb-2 small">
+                                <i class="bi bi-cash-stack me-1 text-muted"></i>
+                                <span class="text-muted">Total Contribution:</span>
+                                <span class="fw-semibold text-success ms-1">Rs @vs.TotalContribution.ToString("N0")</span>
+                            </p>
+                            <p class="mb-0 small">
+                                <i class="bi bi-people me-1 text-muted"></i>
+                                <span class="text-muted">Contributing Societies:</span>
+                                <span class="fw-semibold ms-1">@contributorCount</span>
+                            </p>
+                        </div>
+
+                        <!-- Footer -->
+                        <div class="card-footer bg-white border-top py-3">
+                            <!-- Row 1: Contribute + Create Requisition (50/50) -->
+                            <div class="row g-2 mb-2">
+                                <div class="col-6">
+                                    <button class="btn btn-outline-success btn-sm w-100"
+                                            disabled="@(isRegistrationExpired || alreadyContributed)"
+                                            title="@GetContributeTooltip(isRegistrationExpired, alreadyContributed)"
+                                            @onclick="() => OpenContributeModal(vs)">
+                                        <i class="bi bi-plus-circle me-1"></i>
+                                        @(alreadyContributed ? "Contributed" : "Contribute")
+                                    </button>
+                                </div>
+                                <div class="col-6">
+                                    <button class="btn btn-outline-primary btn-sm w-100"
+                                            disabled="@(!isManager || requisitionExists)"
+                                            title="@GetRequisitionTooltip(isManager, requisitionExists)"
+                                            @onclick="() => GoToCreateRequisition(vs.TotalContribution, vs.VirtualSocietyId)">
+                                        <i class="bi bi-file-earmark-plus me-1"></i> Requisition
+                                    </button>
+                                </div>
+                            </div>
+                            <!-- Row 2: More Details (100%) -->
+                            <div class="row">
+                                <div class="col-12">
+                                    <button class="btn btn-outline-secondary btn-sm w-100"
+                                            @onclick="() => OpenDetailsModal(vs)">
+                                        <i class="bi bi-info-circle me-1"></i> More Details
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+</div>
 
 
-
-@if (societies.Count == 0)
+<!-- ===== MODAL: Contribute ===== -->
+@if (showContributeModal && activeVS != null)
 {
-    <div class="text-center py-5">
-        <p class="text-muted fs-5">No Society available</p>
+    <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.5)">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header border-bottom">
+                    <h6 class="modal-title fw-bold">
+                        <i class="bi bi-plus-circle text-success me-2"></i>
+                        Contribute — @activeVS.VirtualSocietyName
+                    </h6>
+                    <button class="btn-close" @onclick="CloseAllModals"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info py-2 small mb-4">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Current total contribution:
+                        <strong>Rs @activeVS.TotalContribution.ToString("N0")</strong>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold small">
+                            Contribution Amount <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text">Rs</span>
+                            <input type="number" class="form-control" min="1"
+                                   @bind="contributeAmount"
+                                   placeholder="Enter amount" />
+                        </div>
+                        @if (contributeError)
+                        {
+                            <div class="text-danger small mt-1">Amount must be greater than zero.</div>
+                        }
+                    </div>
+                </div>
+                <div class="modal-footer border-top">
+                    <button class="btn btn-outline-secondary btn-sm" @onclick="CloseAllModals">Cancel</button>
+                    <button class="btn btn-success btn-sm px-4"
+                            disabled="@isActing"
+                            @onclick="HandleContribute">
+                        @if (isActing)
+                        {
+                            <span class="spinner-border spinner-border-sm me-1"></span>
+                        }
+                        <i class="bi bi-check-circle me-1"></i> Confirm
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 }
-else
+
+
+<!-- ===== MODAL: More Details ===== -->
+@if (showDetailsModal && activeVS != null)
 {
-    <h3>Total Societies</h3>
+    <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.5)">
+        <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header border-bottom">
+                    <h6 class="modal-title fw-bold">
+                        <i class="bi bi-info-circle me-2"></i>
+                        @activeVS.VirtualSocietyName — Details
+                    </h6>
+                    <button class="btn-close" @onclick="CloseAllModals"></button>
+                </div>
+                <div class="modal-body">
 
-    <select class="form-select" @bind="selectedSocietyId">
-        <option value="" tabindex="">Select Societies</option>
-        @foreach (var option in societies!)
-        {
-            <option value="@option.SocietyId">@option.SocietyName</option>
-        }
-    </select>
+                    <!-- Contributed Societies Table -->
+                    <h6 class="fw-semibold mb-3">Contributing Societies</h6>
 
-    <button class="btn btn-sm btn-primary" @onclick="HandleSociety">Add Society</button>
-    @* <table class="table table-hover table-bordered">
-        <tr>
-            <td>Name</td>
-            <td>Add Society</td>
-        </tr>
-        @foreach (var option in societies)
-        {
-        <tr>
-            <td>@option.SocietyName</td>
-        </tr>
-        }
-    </table> *@
-    
-   
+                    @if (activeVS.ContributedSocieties == null || !activeVS.ContributedSocieties.Any())
+                    {
+                        <p class="text-muted small text-center py-3">No societies have contributed yet.</p>
+                    }
+                    else
+                    {
+                        <div class="table-responsive mb-4">
+                            <table class="table table-bordered table-sm align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="small">#</th>
+                                        <th class="small">Society Name</th>
+                                        <th class="small text-end">Contribution (Rs)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @{
+                                        int i = 1;
+                                    }
+                                    @foreach (var cs in activeVS.ContributedSocieties)
+                                    {
+                                        <tr>
+                                            <td class="text-muted">@i</td>
+                                            <td>
+                                                @(cs.SocietyName ?? "—")
+                                                @if (cs.Chairpersonid == Id)
+                                                {
+                                                    <span class="badge bg-success bg-opacity-10 text-success ms-2 small">You</span>
+                                                }
+                                            </td>
+                                            <td class="text-end fw-semibold">@cs.Conrtibution.ToString("N0")</td>
+                                        </tr>
+                                        i++;
+                                    }
+                                </tbody>
+                                <tfoot class="table-light">
+                                    <tr>
+                                        <td colspan="2" class="text-end fw-bold">Total:</td>
+                                        <td class="text-end fw-bold text-success">
+                                            @activeVS.ContributedSocieties.Sum(c => c.Conrtibution).ToString("N0")
+                                        </td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    }
 
-    <h3>Selected Societies</h3>
-    @foreach (var option in selectedSocieteisList!)
-    {
-        <ul>
-            <li>@option.SocietyId</li>
-            <li>@option.SocietyName</li>
-        </ul>
-    }
-    
+                    <!-- Show Events Button -->
+                    <div class="d-flex justify-content-end">
+                        <button class="btn btn-outline-primary btn-sm px-4"
+                                @onclick="OpenEventsModal">
+                            <i class="bi bi-calendar-event me-1"></i> View Virtual Society Events
+                        </button>
+                    </div>
+
+                </div>
+                <div class="modal-footer border-top">
+                    <button class="btn btn-secondary btn-sm" @onclick="CloseAllModals">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 }
 
-<button class="btn btn-sm btn-primary" @onclick="HandleCreateSociety">Create Society</button>
+
+<!-- ===== MODAL: Events ===== -->
+@if (showEventsModal && activeVS != null)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background:rgba(0,0,0,0.5)">
+        <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header border-bottom">
+                    <h6 class="modal-title fw-bold">
+                        <i class="bi bi-calendar-event me-2"></i>
+                        Events — @activeVS.VirtualSocietyName
+                    </h6>
+                    <button class="btn-close" @onclick="CloseEventsModal"></button>
+                </div>
+                <div class="modal-body">
+
+                    @if (activeVS.VirtualSocietyEvents == null || !activeVS.VirtualSocietyEvents.Any())
+                    {
+                        <div class="text-center text-muted py-5">
+                            <i class="bi bi-calendar-x fs-2 d-block mb-2"></i>
+                            <p class="mb-0 small">No events planned for this virtual society.</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="accordion">
+                            @foreach (var ev in activeVS.VirtualSocietyEvents)
+                            {
+                                bool isOpen = expandedEvents.Contains(ev.Id);
+                                decimal eventTotal = ev.Requirements?
+                                .Sum(r => r.Price * r.Quantity) ?? 0;
+
+                                <div class="accordion-item border mb-2 rounded shadow-sm overflow-hidden">
+                                    <h2 class="accordion-header">
+                                        <button class="accordion-button @(isOpen ? "" : "collapsed") fw-semibold"
+                                                type="button"
+                                                @onclick="() => ToggleEvent(ev.Id)">
+                                            <div class="d-flex align-items-center justify-content-between w-100 flex-wrap gap-2 pe-2">
+                                                <span>@ev.Name</span>
+                                                <div class="d-flex align-items-center gap-3 text-muted small fw-normal">
+                                                    <span>
+                                                        <i class="bi bi-calendar3 me-1"></i>
+                                                        @ev.EventDate.ToString("dd MMM yyyy")
+                                                    </span>
+                                                    <span>
+                                                        <i class="bi bi-clock me-1"></i>
+                                                        @ev.StartTime — @ev.EndTime
+                                                    </span>
+                                                    @if (eventTotal > 0)
+                                                    {
+                                                        <span class="fw-semibold text-success">
+                                                            Rs @eventTotal.ToString("N0")
+                                                        </span>
+                                                    }
+                                                    <span class="badge bg-secondary bg-opacity-10 text-secondary fw-normal">
+                                                        @(ev.Requirements?.Count ?? 0) req(s)
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </button>
+                                    </h2>
+
+                                    @if (isOpen)
+                                    {
+                                        <div class="accordion-collapse show">
+                                            <div class="accordion-body p-0">
+                                                @if (ev.Requirements == null || !ev.Requirements.Any())
+                                                {
+                                                    <p class="text-center text-muted py-3 mb-0 small">
+                                                        No requirements for this event.
+                                                    </p>
+                                                }
+                                                else
+                                                {
+                                                    <div class="table-responsive">
+                                                        <table class="table table-hover table-sm align-middle mb-0">
+                                                            <thead class="table-light">
+                                                                <tr>
+                                                                    <th class="small ps-3">#</th>
+                                                                    <th class="small">Type</th>
+                                                                    <th class="small">Name</th>
+                                                                    <th class="small text-center">Qty</th>
+                                                                    <th class="small text-end">Price</th>
+                                                                    <th class="small text-end">Total</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                @{
+                                                                    int ri = 1;
+                                                                }
+                                                                @foreach (var req in ev.Requirements)
+                                                                {
+                                                                    <tr>
+                                                                        <td class="text-muted ps-3">@ri</td>
+                                                                        <td>@req.Type</td>
+                                                                        <td>@req.Name</td>
+                                                                        <td class="text-center">@req.Quantity</td>
+                                                                        <td class="text-end">@req.Price.ToString("N0")</td>
+                                                                        <td class="text-end fw-semibold text-success">
+                                                                            @((req.Price * req.Quantity).ToString("N0"))
+                                                                        </td>
+                                                                    </tr>
+                                                                    ri++;
+                                                                }
+                                                            </tbody>
+                                                            <tfoot class="table-light">
+                                                                <tr>
+                                                                    <td colspan="5" class="text-end fw-bold">Event Total:</td>
+                                                                    <td class="text-end fw-bold text-primary">
+                                                                        Rs @eventTotal.ToString("N0")
+                                                                    </td>
+                                                                </tr>
+                                                            </tfoot>
+                                                        </table>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+
+                </div>
+                <div class="modal-footer border-top">
+                    <button class="btn btn-secondary btn-sm" @onclick="CloseEventsModal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
 
 
 @inject ChairpersonServices chairpersonServices
-@inject IJSRuntime jSRuntime
+@inject ClaimServices claimServices
+@inject NavigationManager nav
+@inject IJSRuntime JS
+
 @code {
-    private List<ListOfSocietiesDto> societies = new();
+    private Guid Id;
+    private bool loading = false;
+    private bool isActing = false;
 
-    private List<ListOfSocietiesDto> selectedSocieteisList = new()!;
+    private List<GetVirtualSocietyDetailsDto> virtualSocieties = new();
 
-    private string? selectedSocietyName;
-    private string? societyName;
-    private Guid? selectedSocietyId;
+    // ── Active selection ──────────────────────────────────────
+    private GetVirtualSocietyDetailsDto? activeVS;
 
+    // ── Modal flags ───────────────────────────────────────────
+    private bool showContributeModal = false;
+    private bool showDetailsModal = false;
+    private bool showEventsModal = false;
+
+    // ── Contribute form ───────────────────────────────────────
+    private decimal contributeAmount = 0;
+    private bool contributeError = false;
+
+    // ── Accordion ─────────────────────────────────────────────
+    private HashSet<Guid> expandedEvents = new();
+
+    // ── Init ──────────────────────────────────────────────────
     protected override async Task OnParametersSetAsync()
     {
+        loading = true;
         try
         {
-            societies = await chairpersonServices.ListOfSocieties();
-            if(societies == null)
-            {
-                await jSRuntime.InvokeVoidAsync("alert", "Something went wrong.");
-            }
+            var claims = await claimServices.GetClaims();
+            Id = Guid.Parse(claims.Id);
+
+            var response = await chairpersonServices.GetVirtualSocietiesDetails();
+            virtualSocieties = response ?? new();
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
-            await jSRuntime.InvokeVoidAsync("alert", $"Something went wrong. {ex}");
+            Console.WriteLine($"Error loading virtual societies: {ex.Message}");
+            await JS.InvokeVoidAsync("alert", "Something went wrong while loading virtual societies.");
+        }
+        finally
+        {
+            loading = false;
         }
     }
 
-
-    private async Task HandleSociety()
+    // ── Modal Openers ─────────────────────────────────────────
+    private void OpenContributeModal(GetVirtualSocietyDetailsDto vs)
     {
-        if (selectedSocietyId == null)
-        {
-            await jSRuntime.InvokeVoidAsync("alert", "Add society id.");
-            return;
-        }
-
-        var removesociety = societies.Where(s => s.SocietyId == selectedSocietyId).FirstOrDefault();
-        societies.Remove(removesociety!);
-        selectedSocieteisList.Add(removesociety!);
-
-        // selectedSocietyName = "";
-        // societyName = "";
-        // selectedSocietyId = Guid.Empty;
+        activeVS = vs;
+        contributeAmount = 0;
+        contributeError = false;
+        showContributeModal = true;
     }
 
-    private async Task HandleCreateSociety()
+    private void OpenDetailsModal(GetVirtualSocietyDetailsDto vs)
     {
-        List<Guid> onlyIdSocieties = selectedSocieteisList.Select(s => s.SocietyId).ToList();
+        activeVS = vs;
+        expandedEvents.Clear();
+        showDetailsModal = true;
+    }
 
-        if (societyName == null)
+    private void OpenEventsModal()
+    {
+        expandedEvents.Clear();
+        showEventsModal = true;
+    }
+
+    private void CloseEventsModal()
+    {
+        showEventsModal = false;
+        expandedEvents.Clear();
+    }
+
+    private void CloseAllModals()
+    {
+        showContributeModal = false;
+        showDetailsModal = false;
+        showEventsModal = false;
+        activeVS = null;
+        expandedEvents.Clear();
+        contributeAmount = 0;
+        contributeError = false;
+    }
+
+    // ── Accordion ─────────────────────────────────────────────
+    private void ToggleEvent(Guid eventId)
+    {
+        if (expandedEvents.Contains(eventId))
+            expandedEvents.Remove(eventId);
+        else
+            expandedEvents.Add(eventId);
+    }
+
+    // ── Contribute ────────────────────────────────────────────
+    private async Task HandleContribute()
+    {
+        if (activeVS == null) return;
+
+        contributeError = contributeAmount <= 0;
+        if (contributeError) return;
+
+        isActing = true;
+        try
         {
-            await jSRuntime.InvokeVoidAsync("alert", "Society name can not be null.");
-            return;
-        }
-
-        // AddIdInVirtualSocietiesSocietyDto ids = new AddIdInVirtualSocietiesSocietyDto()
-        // {
-        //     SocietyIds = onlyIdSocieties
-        // };
-
-        var CreateVirtualSociety = new CreateVirtualSocietyDto()
+            var dto = new ContributeToVirtualSocietyDto
             {
-                Name = societyName,
-                SocietyIds = onlyIdSocieties
+                VirtualSocietyId = activeVS.VirtualSocietyId,
+                Contribution = contributeAmount
             };
 
-        var response = await chairpersonServices.CreateVirtualSociety(CreateVirtualSociety);
+            var response = await chairpersonServices.ContributeToVirtualSociety(Id, dto);
+            if (response?.Success == true)
+            {
+                await JS.InvokeVoidAsync("alert", "Contribution added successfully.");
+                CloseAllModals();
+                await OnParametersSetAsync();
+            }
+            else
+            {
+                await JS.InvokeVoidAsync("alert", $"Failed to contribute: {response?.Error}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error contributing: {ex.Message}");
+            await JS.InvokeVoidAsync("alert", "An error occurred. Please try again.");
+        }
+        finally
+        {
+            isActing = false;
+        }
+    }
 
-        if (response.Success)
-        {
-              await jSRuntime.InvokeVoidAsync("alert", "Society added successfully.");
-              await OnInitializedAsync();
-         
-        }
-        else
-        {
-            await jSRuntime.InvokeVoidAsync("alert", $"Failed to added: {response.Error}");
-        }
+    // ── Navigation ────────────────────────────────────────────
+    private void GoToCreateRequisition(decimal contribution, Guid id)
+    {
+        nav.NavigateTo($"/chairperson/virtualSociety/requisition?contribution={contribution}&virtualSocietyId={id}");
+    }
+
+    // ── Tooltip Helpers ───────────────────────────────────────
+    private string GetContributeTooltip(bool expired, bool contributed)
+    {
+        if (expired) return "Registration period has ended.";
+        if (contributed) return "You have already contributed to this society.";
+        return "Contribute to this virtual society.";
+    }
+
+    private string GetRequisitionTooltip(bool isManager, bool exists)
+    {
+        if (!isManager) return "Only the manager can create a requisition.";
+        if (exists) return "A requisition already exists for this society.";
+        return "Create a requisition for this virtual society.";
     }
 }
